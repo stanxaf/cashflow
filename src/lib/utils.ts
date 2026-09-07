@@ -15,6 +15,7 @@ export function formatPHP(amountInCentavos: number) {
 
 export function formatDate(date: string, options?: Intl.DateTimeFormatOptions) {
   return new Intl.DateTimeFormat("en-PH", {
+    timeZone: "Asia/Manila",
     month: "short",
     day: "numeric",
     year: "numeric",
