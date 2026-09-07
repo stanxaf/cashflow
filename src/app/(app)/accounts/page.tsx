@@ -1,4 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { accounts, enteredLiquidBalance, latestLiquidBalanceDate } from "@/lib/seed-data";
 import { formatDate, formatPHP } from "@/lib/utils";
 
@@ -7,57 +6,52 @@ export default function AccountsPage() {
   const creditCards = accounts.filter((account) => account.type === "credit_card");
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">The starting point for your estimates</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Accounts</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          These are manually entered balances, not live bank data. Update them when you want a fresher forecast.
-        </p>
-      </div>
+    <div className="space-y-10">
+      <header className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Accounts</h1>
+        <p className="text-sm text-muted-foreground">Balances you entered for the forecast.</p>
+      </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Starting balances</CardTitle>
-          <CardDescription>Last updated {formatDate(latestLiquidBalanceDate(), { month: "long", day: "numeric" })}</CardDescription>
-        </CardHeader>
-        <CardContent className="divide-y">
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-sm font-medium">Liquid accounts</h2>
+          <p className="text-xs text-muted-foreground">Updated {formatDate(latestLiquidBalanceDate(), { month: "short", day: "numeric" })}</p>
+        </div>
+
+        <div className="divide-y border-y">
           {liquid.map((account) => (
-            <div key={account.id} className="flex items-center justify-between gap-4 py-4 first:pt-0">
+            <div key={account.id} className="flex items-center justify-between gap-4 py-4">
               <div>
-                <p className="font-medium">{account.name}</p>
-                <p className="text-sm capitalize text-muted-foreground">{account.type.replace("_", "-")} · entered {formatDate(account.balanceDate, { month: "short", day: "numeric" })}</p>
+                <p className="text-sm font-medium">{account.name}</p>
+                <p className="mt-0.5 text-xs capitalize text-muted-foreground">{account.type.replace("_", "-")}</p>
               </div>
-              <p className="font-medium tabular-nums">{formatPHP(account.balance)}</p>
+              <p className="text-sm font-medium tabular-nums">{formatPHP(account.balance)}</p>
             </div>
           ))}
-          <div className="flex items-center justify-between gap-4 pt-4">
-            <div>
-              <p className="font-medium">Entered liquid balance</p>
-              <p className="text-xs text-muted-foreground">Used as the base for your expected positions.</p>
-            </div>
-            <p className="text-lg font-semibold tabular-nums">{formatPHP(enteredLiquidBalance())}</p>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Credit cards</CardTitle>
-          <CardDescription>Debt is tracked separately; scheduled card payments affect your cash forecast.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {creditCards.map((account) => (
-            <div key={account.id} className="flex items-center justify-between gap-4">
-              <div>
-                <p className="font-medium">{account.name}</p>
-                <p className="text-sm text-muted-foreground">Entered {formatDate(account.balanceDate, { month: "short", day: "numeric" })}</p>
+        <div className="flex items-baseline justify-between gap-4 pt-1">
+          <p className="text-sm text-muted-foreground">Entered total</p>
+          <p className="text-lg font-semibold tabular-nums">{formatPHP(enteredLiquidBalance())}</p>
+        </div>
+      </section>
+
+      {creditCards.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium">Credit cards</h2>
+          <div className="divide-y border-y">
+            {creditCards.map((account) => (
+              <div key={account.id} className="flex items-center justify-between gap-4 py-4">
+                <div>
+                  <p className="text-sm font-medium">{account.name}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Balance entered {formatDate(account.balanceDate, { month: "short", day: "numeric" })}</p>
+                </div>
+                <p className="text-sm font-medium tabular-nums">{formatPHP(Math.abs(account.balance))} owed</p>
               </div>
-              <p className="font-medium tabular-nums">{formatPHP(Math.abs(account.balance))} owed</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
