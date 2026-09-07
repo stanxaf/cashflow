@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CircleDollarSign, Landmark, Plus, Settings2, WalletCards } from "lucide-react";
+import { CalendarClock, Landmark, ListChecks, Plus, Settings2, WalletCards } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/today", label: "Today", icon: CircleDollarSign },
-  { href: "/plan", label: "Plan", icon: CalendarDays },
+  { href: "/paydays", label: "Paydays", icon: CalendarClock },
+  { href: "/upcoming", label: "Upcoming", icon: ListChecks },
   { href: "/accounts", label: "Accounts", icon: Landmark },
 ];
 
@@ -18,7 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-muted/30">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r bg-background lg:flex lg:flex-col">
         <div className="flex h-16 items-center border-b px-6">
-          <Link href="/today" className="flex items-center gap-2 font-semibold">
+          <Link href="/paydays" className="flex items-center gap-2 font-semibold">
             <WalletCards className="h-5 w-5" /> Cashflow
           </Link>
         </div>
@@ -41,13 +41,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur sm:px-6">
-          <Link href="/today" className="font-semibold lg:hidden">Cashflow</Link>
+          <Link href="/paydays" className="font-semibold lg:hidden">Cashflow</Link>
           <div className="hidden lg:block" />
           <Link href="/items/new" className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90">
             <Plus className="h-4 w-4" /> Add item
           </Link>
         </header>
-        <main className="mx-auto w-full max-w-6xl p-4 pb-24 sm:p-6 lg:p-8">{children}</main>
+        <main className="mx-auto w-full max-w-5xl p-4 pb-24 sm:p-6 lg:p-8">{children}</main>
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t bg-background lg:hidden">
