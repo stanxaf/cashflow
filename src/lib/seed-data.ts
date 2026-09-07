@@ -23,6 +23,14 @@ export type FinancialEvent = {
   recurring?: string;
 };
 
+export type PayCycleSummary = {
+  payday: FinancialEvent;
+  income: number;
+  needed: number;
+  result: number;
+  items: FinancialEvent[];
+};
+
 export const prototypeToday = "2026-09-07";
 
 export const accounts: Account[] = [
@@ -102,4 +110,29 @@ export function positionAt(date: string) {
 
 export function obligationsThrough(date: string) {
   return upcomingEvents().filter((event) => event.date <= date && event.type !== "income");
+}
+
+export function payCycleSummaries(): PayCycleSummary[] {
+  const paydays = upcomingPaydays();
+
+  return paydays.map((payday, index) => {
+    const previousBoundary = index === 0 ? prototypeToday : paydays[index - 1].date;
+    const items = upcomingEvents().filter(
+      (event) => event.date > previousBoundary && event.date <= payday.date
+    );
+    const income = items
+      .filter((event) => event.type === "income")
+      .reduce((total, event) => total + event.amount, 0);
+    const needed = items
+      .filter((event) => event.type !== "income")
+      .reduce((total, event) => total + event.amount, 0);
+
+    return {
+      payday,
+      income,
+      needed,
+      result: income - needed,
+      items,
+    };
+  });
 }
