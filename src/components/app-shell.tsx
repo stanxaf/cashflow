@@ -6,8 +6,7 @@ import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/paydays", label: "Home" },
-  { href: "/upcoming", label: "Upcoming" },
+  { href: "/paydays", label: "Cashflow" },
   { href: "/accounts", label: "Accounts" },
 ];
 
@@ -21,21 +20,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link href="/paydays" className="shrink-0 font-semibold">Cashflow</Link>
 
           <nav className="hidden items-center gap-1 sm:flex">
-            {navItems.map(({ href, label }) => {
-              const active = pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground",
-                    active && "text-foreground font-medium"
-                  )}
-                >
-                  {label}
-                </Link>
-              );
-            })}
+            <Link
+              href="/accounts"
+              className={cn(
+                "rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground",
+                pathname.startsWith("/accounts") && "font-medium text-foreground"
+              )}
+            >
+              Accounts
+            </Link>
           </nav>
 
           <Link
@@ -50,7 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-24 sm:px-6 sm:py-12">{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t bg-background sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 border-t bg-background sm:hidden">
         {navItems.map(({ href, label }) => {
           const active = pathname.startsWith(href);
           return (
