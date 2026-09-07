@@ -29,7 +29,7 @@ export default function UpcomingPage() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium">{row.title}</p>
-                  <Badge variant={row.state === "planned" ? "secondary" : "outline"} className="capitalize">{row.state}</Badge>
+                  <Badge className={row.state === "planned" ? "capitalize bg-muted text-muted-foreground" : "capitalize"}>{row.state}</Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {row.type === "transfer" ? "Transfer" : row.type === "income" ? "Income" : "Expense"}{row.recurring ? ` · ${row.recurring}` : ""}
