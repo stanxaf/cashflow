@@ -16,7 +16,7 @@ export function FinancialItemForm({ item }: { item?: FinancialEvent }) {
   const selectClass = "h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
   return (
-    <form className="space-y-6" onSubmit={(event) => { event.preventDefault(); router.push("/plan"); }}>
+    <form className="space-y-6" onSubmit={(event) => { event.preventDefault(); router.push("/upcoming"); }}>
       <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
         {(["expense", "income", "transfer"] as EventType[]).map((value) => (
           <button type="button" key={value} onClick={() => setType(value)} className={`rounded-md px-3 py-2 text-sm font-medium capitalize ${type === value ? "bg-background shadow-sm" : "text-muted-foreground"}`}>{value}</button>
@@ -49,7 +49,7 @@ export function FinancialItemForm({ item }: { item?: FinancialEvent }) {
       </div>
 
       <label className="flex items-center justify-between gap-4 rounded-lg border p-4">
-        <span><span className="block text-sm font-medium">Repeats</span><span className="block text-xs text-muted-foreground">Use for salary, rent, bills, and other regular items.</span></span>
+        <span><span className="block text-sm font-medium">Repeats</span><span className="block text-xs text-muted-foreground">Use for salary, mortgage, bills, and other regular items.</span></span>
         <input type="checkbox" checked={repeat} onChange={(event) => setRepeat(event.target.checked)} className="h-4 w-4" />
       </label>
 
@@ -64,7 +64,7 @@ export function FinancialItemForm({ item }: { item?: FinancialEvent }) {
         <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
         <Button type="submit">{item ? "Save changes" : "Add item"}</Button>
       </div>
-      <p className="text-center text-xs text-muted-foreground">Prototype only — changes are not persisted yet.</p>
+      <p className="text-center text-xs text-muted-foreground">Prototype only — this form does not persist changes yet.</p>
     </form>
   );
 }
