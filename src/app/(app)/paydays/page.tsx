@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import {
-  estimatedPositionToday,
-  latestLiquidBalanceDate,
-  positionAt,
-  upcomingEvents,
-  upcomingPaydays,
-} from "@/lib/seed-data";
+import { payCycleSummaries, upcomingEvents } from "@/lib/seed-data";
 import { formatDate, formatPHP } from "@/lib/utils";
 
 function timingLabel(type: string, date: string) {
@@ -16,45 +10,54 @@ function timingLabel(type: string, date: string) {
   return type === "income" ? `Expected ${formatted}` : `Due ${formatted}`;
 }
 
+function cycleResultLabel(result: number) {
+  return result < 0 ? "Shortfall" : "Remaining";
+}
+
 export default function PaydaysPage() {
   const [showAll, setShowAll] = useState(false);
-  const paydays = upcomingPaydays();
-  const nextPayday = paydays[0];
-  const followingPayday = paydays[1];
-  const nextPosition = nextPayday ? positionAt(nextPayday.date) : estimatedPositionToday();
-  const followingPosition = followingPayday ? positionAt(followingPayday.date) : nextPosition;
+  const cycles = payCycleSummaries();
+  const nextCycle = cycles[0];
+  const followingCycle = cycles[1];
   const upcoming = upcomingEvents();
   const visibleUpcoming = showAll ? upcoming : upcoming.slice(0, 6);
 
   return (
     <div className="space-y-10">
       <section className="grid gap-8 border-b pb-8 sm:grid-cols-2 sm:gap-12">
-        <div className="space-y-2">
-          <p className="text-sm font-medium">
-            Next payday{nextPayday ? ` · ${formatDate(nextPayday.date, { month: "short", day: "numeric" })}` : ""}
-          </p>
-          <p className="text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(nextPosition)}</p>
-          <p className="text-sm text-muted-foreground">Expected position</p>
-        </div>
-
-        {followingPayday && (
+        {nextCycle && (
           <div className="space-y-2">
             <p className="text-sm font-medium">
-              Following payday · {formatDate(followingPayday.date, { month: "short", day: "numeric" })}
+              Next payday · {formatDate(nextCycle.payday.date, { month: "short", day: "numeric" })}
             </p>
-            <p className="text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(followingPosition)}</p>
-            <p className="text-sm text-muted-foreground">Expected position</p>
+            <p className="text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
+              {formatPHP(Math.abs(nextCycle.result))}
+            </p>
+            <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
+            <p className="text-sm text-muted-foreground">
+              {formatPHP(nextCycle.income)} income · {formatPHP(nextCycle.needed)} needed
+            </p>
+          </div>
+        )}
+
+        {followingCycle && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
+              Following payday · {formatDate(followingCycle.payday.date, { month: "short", day: "numeric" })}
+            </p>
+            <p className="text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
+              {formatPHP(Math.abs(followingCycle.result))}
+            </p>
+            <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
+            <p className="text-sm text-muted-foreground">
+              {formatPHP(followingCycle.income)} income · {formatPHP(followingCycle.needed)} needed
+            </p>
           </div>
         )}
       </section>
 
       <section className="space-y-4">
-        <div>
-          <h1 className="text-sm font-medium">Upcoming</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Based on balances last updated {formatDate(latestLiquidBalanceDate(), { month: "short", day: "numeric" })}.
-          </p>
-        </div>
+        <h1 className="text-sm font-medium">Upcoming</h1>
 
         <div className="divide-y border-y">
           {visibleUpcoming.map((event) => (
@@ -76,14 +79,15 @@ export default function PaydaysPage() {
           ))}
         </div>
 
-        <div className="flex items-center justify-between gap-4 text-sm">
-          {upcoming.length > 6 ? (
-            <button type="button" onClick={() => setShowAll((value) => !value)} className="font-medium hover:underline">
-              {showAll ? "Show less" : "See all"}
-            </button>
-          ) : <span />}
-          <Link href="/items/new" className="text-muted-foreground hover:text-foreground">Add item</Link>
-        </div>
+        {upcoming.length > 6 && (
+          <button
+            type="button"
+            onClick={() => setShowAll((value) => !value)}
+            className="text-sm font-medium hover:underline"
+          >
+            {showAll ? "Show less" : "See all"}
+          </button>
+        )}
       </section>
     </div>
   );
