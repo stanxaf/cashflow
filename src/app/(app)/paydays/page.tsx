@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CalendarClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   estimatedPositionToday,
@@ -11,7 +11,7 @@ import {
   upcomingEvents,
   upcomingPaydays,
 } from "@/lib/seed-data";
-import { formatDate, formatPHP } from "@/lib/utils";
+import { cn, formatDate, formatPHP } from "@/lib/utils";
 
 export default function PaydaysPage() {
   const paydays = upcomingPaydays();
@@ -109,7 +109,7 @@ export default function PaydaysPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-medium">{event.title}</p>
-                    {event.state === "planned" && <Badge variant="secondary">Planned</Badge>}
+                    {event.state === "planned" && <Badge className="bg-muted text-muted-foreground">Planned</Badge>}
                   </div>
                   <p className="text-xs text-muted-foreground">{formatDate(event.date, { month: "short", day: "numeric" })}{event.recurring ? ` · ${event.recurring}` : ""}</p>
                 </div>
@@ -122,8 +122,8 @@ export default function PaydaysPage() {
       </section>
 
       <div className="flex flex-wrap gap-3">
-        <Button asChild><Link href="/items/new">Add upcoming item</Link></Button>
-        <Button asChild variant="outline"><Link href="/accounts">Update starting balances</Link></Button>
+        <Link href="/items/new" className={cn(buttonVariants())}>Add upcoming item</Link>
+        <Link href="/accounts" className={cn(buttonVariants({ variant: "outline" }))}>Update starting balances</Link>
       </div>
     </div>
   );
