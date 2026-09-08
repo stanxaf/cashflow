@@ -11,7 +11,7 @@ function timingLabel(type: string, date: string) {
 }
 
 function cycleResultLabel(result: number) {
-  return result < 0 ? "Shortfall" : "Remaining";
+  return result < 0 ? "Reserve needed" : "Surplus";
 }
 
 export default function PaydaysPage() {
@@ -23,17 +23,19 @@ export default function PaydaysPage() {
   const visibleUpcoming = showAll ? upcoming : upcoming.slice(0, 6);
 
   return (
-    <div className="space-y-10">
-      <section className="grid gap-8 border-b pb-8 sm:grid-cols-2 sm:gap-12">
+    <div className="space-y-6">
+      <section className="grid gap-8 pb-2 sm:grid-cols-2 sm:gap-12">
         {nextCycle && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <p className="text-sm font-medium">
               Next payday · {formatDate(nextCycle.payday.date, { month: "short", day: "numeric" })}
             </p>
-            <p className="text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
-              {formatPHP(Math.abs(nextCycle.result))}
-            </p>
-            <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
+            <div>
+              <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
+              <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
+                {formatPHP(Math.abs(nextCycle.result))}
+              </p>
+            </div>
             <p className="text-sm text-muted-foreground">
               {formatPHP(nextCycle.income)} income · {formatPHP(nextCycle.needed)} needed
             </p>
@@ -41,14 +43,16 @@ export default function PaydaysPage() {
         )}
 
         {followingCycle && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <p className="text-sm font-medium">
               Following payday · {formatDate(followingCycle.payday.date, { month: "short", day: "numeric" })}
             </p>
-            <p className="text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
-              {formatPHP(Math.abs(followingCycle.result))}
-            </p>
-            <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
+            <div>
+              <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
+              <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
+                {formatPHP(Math.abs(followingCycle.result))}
+              </p>
+            </div>
             <p className="text-sm text-muted-foreground">
               {formatPHP(followingCycle.income)} income · {formatPHP(followingCycle.needed)} needed
             </p>
@@ -56,7 +60,7 @@ export default function PaydaysPage() {
         )}
       </section>
 
-      <section className="space-y-4">
+      <section className="space-y-3">
         <h1 className="text-sm font-medium">Upcoming</h1>
 
         <div className="divide-y border-y">
