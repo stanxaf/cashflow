@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { accounts, type EventType, type FinancialEvent } from "@/lib/seed-data";
@@ -10,16 +11,18 @@ const rowClass = "grid min-h-14 grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-
 const controlClass = "w-full bg-transparent text-right text-sm outline-none placeholder:text-muted-foreground/70";
 const selectClass = `${controlClass} appearance-none`;
 
-export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onDone: () => void }) {
+export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onDone?: () => void }) {
+  const router = useRouter();
   const [type, setType] = useState<EventType>(item?.type ?? "expense");
   const [repeat, setRepeat] = useState(Boolean(item?.recurring));
+  const finish = onDone ?? (() => router.push("/paydays"));
 
   return (
     <form
       className="flex min-h-0 flex-1 flex-col"
       onSubmit={(event) => {
         event.preventDefault();
-        onDone();
+        finish();
       }}
     >
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-2">
