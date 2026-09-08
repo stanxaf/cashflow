@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, Pencil } from "lucide-react";
+import { Check, Pencil, X } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { FinancialItemForm } from "@/components/financial-item-form";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
+import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { FinancialEvent } from "@/lib/seed-data";
 import { events, payCycleSummaries } from "@/lib/seed-data";
@@ -133,9 +134,14 @@ function PaydaysContent() {
       {isTablet ? (
         <Drawer open={editorOpen} onOpenChange={(open) => { if (!open) closeEditor(); }} direction="right">
           <DrawerContent>
-            <DrawerHeader>
+            <DrawerHeader className="border-b pr-12 text-left">
               <DrawerTitle>{editorTitle}</DrawerTitle>
             </DrawerHeader>
+            <DrawerClose asChild>
+              <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close">
+                <X className="h-4 w-4" />
+              </Button>
+            </DrawerClose>
             <FinancialItemForm item={editingItem} onDone={closeEditor} />
           </DrawerContent>
         </Drawer>
