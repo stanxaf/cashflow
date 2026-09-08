@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Pencil } from "lucide-react";
 import { useState } from "react";
+import { FinancialItemForm } from "@/components/financial-item-form";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { FinancialEvent } from "@/lib/seed-data";
-import { payCycleSummaries } from "@/lib/seed-data";
+import { events, payCycleSummaries } from "@/lib/seed-data";
 import { cn, formatDate, formatPHP } from "@/lib/utils";
 
 function timingLabel(type: string, date: string) {
@@ -23,38 +26,11 @@ function cycleResultLabel(result: number) {
   return result < 0 ? "Reserve needed" : "Surplus";
 }
 
-function UpcomingRow({
-  event,
-  completed,
-  onToggle,
-  isLast,
-}: {
-  event: FinancialEvent;
-  completed: boolean;
-  onToggle: () => void;
-  isLast: boolean;
-}) {
+function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialEvent; completed: boolean; onToggle: () => void; isLast: boolean }) {
   return (
-    <div
-      className={cn(
-        "grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-1.5 sm:px-3",
-        !isLast && "border-b border-border/50",
-        completed && "text-muted-foreground"
-      )}
-    >
-      <button
-        type="button"
-        aria-label={completed ? `Mark ${event.title} as upcoming` : `Mark ${event.title} as complete`}
-        aria-pressed={completed}
-        onClick={onToggle}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <span
-          className={cn(
-            "flex h-5 w-5 items-center justify-center rounded-full border transition-colors",
-            completed ? "border-foreground bg-foreground text-background" : "border-muted-foreground/50"
-          )}
-        >
+    <div className={cn("grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-1.5 sm:px-3", !isLast && "border-b border-border/50", completed && "text-muted-foreground")}>
+      <button type="button" aria-label={completed ? `Mark ${event.title} as upcoming` : `Mark ${event.title} as complete`} aria-pressed={completed} onClick={onToggle} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <span className={cn("flex h-5 w-5 items-center justify-center rounded-full border transition-colors", completed ? "border-foreground bg-foreground text-background" : "border-muted-foreground/50")}>
           {completed && <Check className="h-3.5 w-3.5" />}
         </span>
       </button>
@@ -62,9 +38,7 @@ function UpcomingRow({
       <div className="min-w-0 py-2">
         <p className={cn("truncate text-sm font-medium", completed && "line-through")}>{event.title}</p>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          {completed
-            ? completedTimingLabel(event.type, event.date)
-            : `${timingLabel(event.type, event.date)}${event.state === "planned" ? " · Planned" : ""}`}
+          {completed ? completedTimingLabel(event.type, event.date) : `${timingLabel(event.type, event.date)}${event.state === "planned" ? " · Planned" : ""}`}
         </p>
       </div>
 
@@ -72,11 +46,7 @@ function UpcomingRow({
         {event.type === "income" ? "+" : "−"}{formatPHP(event.amount)}
       </p>
 
-      <Link
-        href={`/items/${event.id}/edit`}
-        aria-label={`Edit ${event.title}`}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
+      <Link href={`/paydays?item=${event.id}`} aria-label={`Edit ${event.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Pencil className="h-4 w-4" />
       </Link>
     </div>
@@ -84,10 +54,19 @@ function UpcomingRow({
 }
 
 export default function PaydaysPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const cycles = payCycleSummaries();
   const nextCycle = cycles[0];
   const followingCycle = cycles[1];
+  const itemParam = searchParams.get("item");
+  const editingItem = itemParam && itemParam !== "new" ? events.find((event) => event.id === itemParam) : undefined;
+  const editorOpen = itemParam === "new" || Boolean(editingItem);
+
+  function closeEditor() {
+    router.replace("/paydays");
+  }
 
   function toggleCompleted(id: string) {
     setCompletedIds((current) => {
@@ -99,64 +78,54 @@ export default function PaydaysPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-8 pb-2 sm:grid-cols-2 sm:gap-12">
-        {nextCycle && (
-          <div className="space-y-3">
-            <p className="text-sm font-medium">
-              Next payday · {formatDate(nextCycle.payday.date, { month: "short", day: "numeric" })}
-            </p>
-            <div>
-              <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
-              <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
-                {formatPHP(Math.abs(nextCycle.result))}
-              </p>
+    <>
+      <div className="space-y-6">
+        <section className="grid gap-8 pb-2 sm:grid-cols-2 sm:gap-12">
+          {nextCycle && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Next payday · {formatDate(nextCycle.payday.date, { month: "short", day: "numeric" })}</p>
+              <div>
+                <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
+                <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(nextCycle.result))}</p>
+              </div>
+              <p className="text-sm text-muted-foreground">{formatPHP(nextCycle.income)} income · {formatPHP(nextCycle.needed)} needed</p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {formatPHP(nextCycle.income)} income · {formatPHP(nextCycle.needed)} needed
-            </p>
-          </div>
-        )}
+          )}
 
-        {followingCycle && (
-          <div className="space-y-3">
-            <p className="text-sm font-medium">
-              Following payday · {formatDate(followingCycle.payday.date, { month: "short", day: "numeric" })}
-            </p>
-            <div>
-              <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
-              <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
-                {formatPHP(Math.abs(followingCycle.result))}
-              </p>
+          {followingCycle && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Following payday · {formatDate(followingCycle.payday.date, { month: "short", day: "numeric" })}</p>
+              <div>
+                <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
+                <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(followingCycle.result))}</p>
+              </div>
+              <p className="text-sm text-muted-foreground">{formatPHP(followingCycle.income)} income · {formatPHP(followingCycle.needed)} needed</p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {formatPHP(followingCycle.income)} income · {formatPHP(followingCycle.needed)} needed
-            </p>
-          </div>
-        )}
-      </section>
+          )}
+        </section>
 
-      <section className="space-y-4">
-        {cycles.map((cycle) => (
-          <div key={cycle.payday.id} className="space-y-2">
-            <p className="text-sm font-medium">
-              Payday · {formatDate(cycle.payday.date, { month: "short", day: "numeric" })}
-            </p>
-
-            <div className="overflow-hidden rounded-xl bg-muted/45">
-              {cycle.items.map((event, eventIndex) => (
-                <UpcomingRow
-                  key={event.id}
-                  event={event}
-                  completed={completedIds.has(event.id)}
-                  onToggle={() => toggleCompleted(event.id)}
-                  isLast={eventIndex === cycle.items.length - 1}
-                />
-              ))}
+        <section className="space-y-4">
+          {cycles.map((cycle) => (
+            <div key={cycle.payday.id} className="space-y-2">
+              <p className="text-sm font-medium">Payday · {formatDate(cycle.payday.date, { month: "short", day: "numeric" })}</p>
+              <div className="overflow-hidden rounded-xl bg-muted/45">
+                {cycle.items.map((event, eventIndex) => (
+                  <UpcomingRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={eventIndex === cycle.items.length - 1} />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </section>
-    </div>
+          ))}
+        </section>
+      </div>
+
+      <Sheet open={editorOpen} onOpenChange={(open) => { if (!open) closeEditor(); }}>
+        <SheetContent side="adaptive" className="p-0 sm:max-w-none">
+          <SheetHeader className="shrink-0 border-b px-4 py-4 pr-12 text-left">
+            <SheetTitle>{editingItem ? `Edit ${editingItem.title}` : "Add item"}</SheetTitle>
+          </SheetHeader>
+          <FinancialItemForm item={editingItem} onDone={closeEditor} />
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
