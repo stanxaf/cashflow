@@ -1,11 +1,11 @@
 import { FinancialItemForm } from "@/components/financial-item-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function NewItemPage() {
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div><p className="text-sm text-muted-foreground">Manual entry</p><h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Add item</h1></div>
-      <Card><CardHeader><CardTitle>Financial item</CardTitle><CardDescription>Add an actual, scheduled, or planned event to your cashflow.</CardDescription></CardHeader><CardContent><FinancialItemForm /></CardContent></Card>
+    <div className="fixed inset-0 z-50 bg-black/20 sm:bg-black/25">
+      <div className="absolute inset-x-0 bottom-0 h-[88dvh] overflow-hidden rounded-t-2xl bg-background shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:h-full sm:w-[460px] sm:rounded-none sm:border-l">
+        <FinancialItemForm />
+      </div>
     </div>
   );
 }
