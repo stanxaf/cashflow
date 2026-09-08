@@ -9,7 +9,10 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-select": "latest",
+    "@radix-ui/react-switch": "latest",
     "class-variance-authority": "latest",
     "clsx": "latest",
     "lucide-react": "latest",
