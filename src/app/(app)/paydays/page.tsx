@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Pencil } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { FinancialItemForm } from "@/components/financial-item-form";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { FinancialEvent } from "@/lib/seed-data";
@@ -53,7 +53,7 @@ function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialE
   );
 }
 
-export default function PaydaysPage() {
+function PaydaysContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
@@ -127,5 +127,13 @@ export default function PaydaysPage() {
         </SheetContent>
       </Sheet>
     </>
+  );
+}
+
+export default function PaydaysPage() {
+  return (
+    <Suspense fallback={null}>
+      <PaydaysContent />
+    </Suspense>
   );
 }
