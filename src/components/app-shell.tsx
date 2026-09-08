@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -11,8 +13,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link href="/paydays" className="shrink-0 font-semibold">Cashflow</Link>
 
           <Link
-            href="/items/new"
-            className="ml-auto inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            href="/paydays?item=new"
+            className={cn(buttonVariants({ size: "sm" }), "ml-auto gap-2")}
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Add</span>
