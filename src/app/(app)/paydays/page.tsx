@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import { useState } from "react";
 import { payCycleSummaries, upcomingEvents } from "@/lib/seed-data";
 import { cn, formatDate, formatPHP } from "@/lib/utils";
@@ -89,7 +89,7 @@ export default function PaydaysPage() {
               <div
                 key={event.id}
                 className={cn(
-                  "grid grid-cols-[auto_1fr_auto] items-center gap-3 py-4",
+                  "grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-2",
                   completed && "text-muted-foreground"
                 )}
               >
@@ -99,25 +99,40 @@ export default function PaydaysPage() {
                   aria-pressed={completed}
                   onClick={() => toggleCompleted(event.id)}
                   className={cn(
-                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
-                    completed ? "border-foreground bg-foreground text-background" : "border-muted-foreground/50 hover:border-foreground"
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-muted",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   )}
                 >
-                  {completed && <Check className="h-3.5 w-3.5" />}
+                  <span
+                    className={cn(
+                      "flex h-5 w-5 items-center justify-center rounded-full border transition-colors",
+                      completed ? "border-foreground bg-foreground text-background" : "border-muted-foreground/50"
+                    )}
+                  >
+                    {completed && <Check className="h-3.5 w-3.5" />}
+                  </span>
                 </button>
 
-                <Link href={`/items/${event.id}/edit`} className="min-w-0">
+                <div className="min-w-0 py-2">
                   <p className={cn("truncate text-sm font-medium", completed && "line-through")}>{event.title}</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
                     {completed
                       ? completedTimingLabel(event.type, event.date)
                       : `${timingLabel(event.type, event.date)}${event.state === "planned" ? " · Planned" : ""}`}
                   </p>
-                </Link>
+                </div>
 
                 <p className={cn("text-sm tabular-nums", completed && "text-muted-foreground")}>
                   {event.type === "income" ? "+" : "−"}{formatPHP(event.amount)}
                 </p>
+
+                <Link
+                  href={`/items/${event.id}/edit`}
+                  aria-label={`Edit ${event.title}`}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Link>
               </div>
             );
           })}
