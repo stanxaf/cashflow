@@ -2,14 +2,27 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { accounts, type EventType, type FinancialEvent } from "@/lib/seed-data";
 import { cn } from "@/lib/utils";
 
 const rowClass = "grid min-h-14 grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-4 px-4";
-const controlClass = "w-full bg-transparent text-right text-sm outline-none placeholder:text-muted-foreground/70";
-const selectClass = `${controlClass} appearance-none`;
+const inputClass = "h-9 border-0 bg-transparent px-0 text-right shadow-none focus-visible:ring-0";
+const selectTriggerClass = "ml-auto h-9 w-auto min-w-36 justify-end gap-2 border-0 bg-transparent px-0 text-right shadow-none focus:ring-0";
 
 export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onDone?: () => void }) {
   const router = useRouter();
@@ -46,90 +59,125 @@ export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onD
           <section className="overflow-hidden rounded-xl bg-muted/45">
             <label className={cn(rowClass, "border-b border-border/50")}>
               <span className="text-sm">Title</span>
-              <input name="title" defaultValue={item?.title} placeholder="Required" required className={controlClass} />
+              <Input name="title" defaultValue={item?.title} placeholder="Required" required className={inputClass} />
             </label>
+
             <label className={cn(rowClass, "border-b border-border/50")}>
               <span className="text-sm">Amount</span>
-              <div className="flex items-center justify-end gap-1 text-sm">
+              <div className="ml-auto flex items-center gap-1 text-sm">
                 <span className="text-muted-foreground">₱</span>
-                <input
+                <Input
                   name="amount"
                   inputMode="decimal"
                   defaultValue={item ? item.amount / 100 : undefined}
                   placeholder="0.00"
                   required
-                  className="min-w-0 flex-1 bg-transparent text-right outline-none placeholder:text-muted-foreground/70"
+                  className="h-9 w-28 border-0 bg-transparent px-0 text-right shadow-none focus-visible:ring-0"
                 />
               </div>
             </label>
+
             <label className={rowClass}>
               <span className="text-sm">{type === "income" ? "Expected" : "Due"}</span>
-              <input name="date" type="date" defaultValue={item?.date ?? "2026-09-08"} required className={controlClass} />
+              <Input name="date" type="date" defaultValue={item?.date ?? "2026-09-08"} required className={inputClass} />
             </label>
           </section>
 
           <section className="overflow-hidden rounded-xl bg-muted/45">
             {type === "transfer" ? (
               <>
-                <label className={cn(rowClass, "border-b border-border/50")}>
+                <div className={cn(rowClass, "border-b border-border/50")}>
                   <span className="text-sm">From</span>
-                  <div className="flex items-center justify-end gap-1">
-                    <select className={selectClass} defaultValue={item?.fromAccountId ?? "bpi"}>
-                      {accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
-                    </select>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </div>
-                </label>
-                <label className={rowClass}>
+                  <Select defaultValue={item?.fromAccountId ?? "bpi"}>
+                    <SelectTrigger className={selectTriggerClass} aria-label="From account">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {accounts.map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className={rowClass}>
                   <span className="text-sm">To</span>
-                  <div className="flex items-center justify-end gap-1">
-                    <select className={selectClass} defaultValue={item?.toAccountId ?? "maya"}>
-                      {accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
-                    </select>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </div>
-                </label>
+                  <Select defaultValue={item?.toAccountId ?? "maya"}>
+                    <SelectTrigger className={selectTriggerClass} aria-label="To account">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {accounts.map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </>
             ) : (
-              <label className={rowClass}>
+              <div className={rowClass}>
                 <span className="text-sm">Account</span>
-                <div className="flex items-center justify-end gap-1">
-                  <select className={selectClass} defaultValue={item?.accountId ?? "bpi"}>
-                    {accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
-                  </select>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                </div>
-              </label>
+                <Select defaultValue={item?.accountId ?? "bpi"}>
+                  <SelectTrigger className={selectTriggerClass} aria-label="Account">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accounts.map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </section>
 
           <section className="overflow-hidden rounded-xl bg-muted/45">
-            <label className={cn(rowClass, repeat && "border-b border-border/50")}>
+            <div className={cn(rowClass, repeat && "border-b border-border/50")}>
               <span className="text-sm">Repeats</span>
-              <span className="flex justify-end">
-                <input type="checkbox" checked={repeat} onChange={(event) => setRepeat(event.target.checked)} className="h-5 w-5 accent-foreground" />
-              </span>
-            </label>
+              <div className="flex justify-end">
+                <Switch checked={repeat} onCheckedChange={setRepeat} aria-label="Repeats" />
+              </div>
+            </div>
+
             {repeat && (
-              <label className={rowClass}>
+              <div className={rowClass}>
                 <span className="text-sm">Frequency</span>
-                <div className="flex items-center justify-end gap-1">
-                  <select className={selectClass} defaultValue={item?.recurring ? "monthly" : "monthly"}>
-                    <option value="weekly">Weekly</option>
-                    <option value="twice-monthly">Twice monthly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                </div>
-              </label>
+                <Select defaultValue={item?.recurring ? "monthly" : "monthly"}>
+                  <SelectTrigger className={selectTriggerClass} aria-label="Frequency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="twice-monthly">Twice monthly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </section>
 
           {item && (
-            <Button type="button" variant="ghost" className="w-full justify-start text-destructive hover:text-destructive">
-              Delete item
-            </Button>
+            <AlertDialog>
+              <section className="overflow-hidden rounded-xl bg-muted/45">
+                <AlertDialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex min-h-14 w-full items-center px-4 text-left text-sm font-medium text-destructive transition-colors hover:bg-muted"
+                  >
+                    Delete item
+                  </button>
+                </AlertDialogTrigger>
+              </section>
+
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete item?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Delete {item.title}? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={finish}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </div>
