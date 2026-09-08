@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, Pencil, X } from "lucide-react";
+import { Check, ChevronLeft, Pencil, X } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
-import { FinancialItemForm } from "@/components/financial-item-form";
+import { FinancialItemForm, type SelectionView } from "@/components/financial-item-form";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -26,6 +26,14 @@ function completedTimingLabel(type: string, date: string) {
 
 function cycleResultLabel(result: number) {
   return result < 0 ? "Reserve needed" : "Surplus";
+}
+
+function selectionTitle(view: SelectionView) {
+  if (view === "frequency") return "Frequency";
+  if (view === "from") return "From account";
+  if (view === "to") return "To account";
+  if (view === "account") return "Account";
+  return null;
 }
 
 function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialEvent; completed: boolean; onToggle: () => void; isLast: boolean }) {
@@ -60,6 +68,7 @@ function PaydaysContent() {
   const searchParams = useSearchParams();
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [isTablet, setIsTablet] = useState(false);
+  const [selectionView, setSelectionView] = useState<SelectionView>(null);
   const cycles = payCycleSummaries();
   const nextCycle = cycles[0];
   const followingCycle = cycles[1];
@@ -76,6 +85,7 @@ function PaydaysContent() {
   }, []);
 
   function closeEditor() {
+    setSelectionView(null);
     router.replace("/paydays");
   }
 
@@ -89,6 +99,17 @@ function PaydaysContent() {
   }
 
   const editorTitle = editingItem ? `Edit ${editingItem.title}` : "Add item";
+  const drilldownTitle = selectionTitle(selectionView);
+  const currentTitle = drilldownTitle ?? editorTitle;
+
+  const editorForm = (
+    <FinancialItemForm
+      item={editingItem}
+      onDone={closeEditor}
+      selectionView={selectionView}
+      onSelectionViewChange={setSelectionView}
+    />
+  );
 
   return (
     <>
@@ -135,23 +156,37 @@ function PaydaysContent() {
         <Drawer open={editorOpen} onOpenChange={(open) => { if (!open) closeEditor(); }} direction="right">
           <DrawerContent>
             <DrawerHeader className="border-b pr-12 text-left">
-              <DrawerTitle>{editorTitle}</DrawerTitle>
+              <div className="flex items-center gap-2">
+                {selectionView && (
+                  <Button type="button" variant="ghost" size="icon" aria-label="Back" onClick={() => setSelectionView(null)} className="-ml-2 shrink-0">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                )}
+                <DrawerTitle>{currentTitle}</DrawerTitle>
+              </div>
             </DrawerHeader>
             <DrawerClose asChild>
               <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close">
                 <X className="h-4 w-4" />
               </Button>
             </DrawerClose>
-            <FinancialItemForm item={editingItem} onDone={closeEditor} />
+            {editorForm}
           </DrawerContent>
         </Drawer>
       ) : (
         <Sheet open={editorOpen} onOpenChange={(open) => { if (!open) closeEditor(); }}>
           <SheetContent side="bottom" className="h-[85dvh] p-0">
             <SheetHeader className="border-b px-4 py-4 pr-12 text-left">
-              <SheetTitle>{editorTitle}</SheetTitle>
+              <div className="flex items-center gap-2">
+                {selectionView && (
+                  <Button type="button" variant="ghost" size="icon" aria-label="Back" onClick={() => setSelectionView(null)} className="-ml-2 shrink-0">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                )}
+                <SheetTitle>{currentTitle}</SheetTitle>
+              </div>
             </SheetHeader>
-            <FinancialItemForm item={editingItem} onDone={closeEditor} />
+            {editorForm}
           </SheetContent>
         </Sheet>
       )}
