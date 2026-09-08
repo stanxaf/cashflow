@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Pencil } from "lucide-react";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { FinancialItemForm } from "@/components/financial-item-form";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { FinancialEvent } from "@/lib/seed-data";
 import { events, payCycleSummaries } from "@/lib/seed-data";
@@ -57,12 +58,21 @@ function PaydaysContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const [isTablet, setIsTablet] = useState(false);
   const cycles = payCycleSummaries();
   const nextCycle = cycles[0];
   const followingCycle = cycles[1];
   const itemParam = searchParams.get("item");
   const editingItem = itemParam && itemParam !== "new" ? events.find((event) => event.id === itemParam) : undefined;
   const editorOpen = itemParam === "new" || Boolean(editingItem);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const updateViewport = () => setIsTablet(mediaQuery.matches);
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+    return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
 
   function closeEditor() {
     router.replace("/paydays");
@@ -76,6 +86,8 @@ function PaydaysContent() {
       return next;
     });
   }
+
+  const editorTitle = editingItem ? `Edit ${editingItem.title}` : "Add item";
 
   return (
     <>
@@ -118,14 +130,25 @@ function PaydaysContent() {
         </section>
       </div>
 
-      <Sheet open={editorOpen} onOpenChange={(open) => { if (!open) closeEditor(); }}>
-        <SheetContent side="adaptive" className="p-0 sm:max-w-none">
-          <SheetHeader className="shrink-0 border-b px-4 py-4 pr-12 text-left">
-            <SheetTitle>{editingItem ? `Edit ${editingItem.title}` : "Add item"}</SheetTitle>
-          </SheetHeader>
-          <FinancialItemForm item={editingItem} onDone={closeEditor} />
-        </SheetContent>
-      </Sheet>
+      {isTablet ? (
+        <Drawer open={editorOpen} onOpenChange={(open) => { if (!open) closeEditor(); }} direction="right">
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>{editorTitle}</DrawerTitle>
+            </DrawerHeader>
+            <FinancialItemForm item={editingItem} onDone={closeEditor} />
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Sheet open={editorOpen} onOpenChange={(open) => { if (!open) closeEditor(); }}>
+          <SheetContent side="bottom" className="h-[85dvh] p-0">
+            <SheetHeader className="border-b px-4 py-4 pr-12 text-left">
+              <SheetTitle>{editorTitle}</SheetTitle>
+            </SheetHeader>
+            <FinancialItemForm item={editingItem} onDone={closeEditor} />
+          </SheetContent>
+        </Sheet>
+      )}
     </>
   );
 }
