@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Check, Pencil } from "lucide-react";
 import { useState } from "react";
 import type { FinancialEvent } from "@/lib/seed-data";
-import { payCycleSummaries, upcomingEvents } from "@/lib/seed-data";
+import { payCycleSummaries } from "@/lib/seed-data";
 import { cn, formatDate, formatPHP } from "@/lib/utils";
 
 function timingLabel(type: string, date: string) {
@@ -84,16 +84,10 @@ function UpcomingRow({
 }
 
 export default function PaydaysPage() {
-  const [showAll, setShowAll] = useState(false);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const cycles = payCycleSummaries();
   const nextCycle = cycles[0];
   const followingCycle = cycles[1];
-  const upcoming = upcomingEvents();
-  const visibleIds = new Set((showAll ? upcoming : upcoming.slice(0, 6)).map((event) => event.id));
-  const visibleCycles = cycles
-    .map((cycle) => ({ ...cycle, items: cycle.items.filter((event) => visibleIds.has(event.id)) }))
-    .filter((cycle) => cycle.items.length > 0);
 
   function toggleCompleted(id: string) {
     setCompletedIds((current) => {
@@ -143,14 +137,11 @@ export default function PaydaysPage() {
       </section>
 
       <section className="space-y-4">
-        {visibleCycles.map((cycle, cycleIndex) => (
+        {cycles.map((cycle) => (
           <div key={cycle.payday.id} className="space-y-2">
-            <div className="flex items-center justify-between gap-4">
-              <h1 className={cn("text-sm font-medium", cycleIndex > 0 && "invisible")}>Upcoming</h1>
-              <p className="text-sm text-muted-foreground">
-                {formatDate(cycle.payday.date, { month: "short", day: "numeric" })} pay cycle
-              </p>
-            </div>
+            <p className="text-sm font-medium">
+              Payday · {formatDate(cycle.payday.date, { month: "short", day: "numeric" })}
+            </p>
 
             <div className="overflow-hidden rounded-xl bg-muted/45">
               {cycle.items.map((event, eventIndex) => (
@@ -165,16 +156,6 @@ export default function PaydaysPage() {
             </div>
           </div>
         ))}
-
-        {upcoming.length > 6 && (
-          <button
-            type="button"
-            onClick={() => setShowAll((value) => !value)}
-            className="text-sm font-medium hover:underline"
-          >
-            {showAll ? "Show less" : "See all"}
-          </button>
-        )}
       </section>
     </div>
   );
