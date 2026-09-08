@@ -27,15 +27,18 @@ function UpcomingRow({
   event,
   completed,
   onToggle,
+  isLast,
 }: {
   event: FinancialEvent;
   completed: boolean;
   onToggle: () => void;
+  isLast: boolean;
 }) {
   return (
     <div
       className={cn(
-        "grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-2",
+        "grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-1.5 sm:px-3",
+        !isLast && "border-b border-border/50",
         completed && "text-muted-foreground"
       )}
     >
@@ -44,7 +47,7 @@ function UpcomingRow({
         aria-label={completed ? `Mark ${event.title} as upcoming` : `Mark ${event.title} as complete`}
         aria-pressed={completed}
         onClick={onToggle}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span
           className={cn(
@@ -72,7 +75,7 @@ function UpcomingRow({
       <Link
         href={`/items/${event.id}/edit`}
         aria-label={`Edit ${event.title}`}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Pencil className="h-4 w-4" />
       </Link>
@@ -139,28 +142,29 @@ export default function PaydaysPage() {
         )}
       </section>
 
-      <section className="space-y-3">
-        <h1 className="text-sm font-medium">Upcoming</h1>
-
-        <div className="border-y">
-          {visibleCycles.map((cycle, cycleIndex) => (
-            <div key={cycle.payday.id} className={cn(cycleIndex > 0 && "border-t")}>
-              <div className="px-11 py-3 text-sm text-muted-foreground">
+      <section className="space-y-4">
+        {visibleCycles.map((cycle, cycleIndex) => (
+          <div key={cycle.payday.id} className="space-y-2">
+            <div className="flex items-center justify-between gap-4">
+              <h1 className={cn("text-sm font-medium", cycleIndex > 0 && "invisible")}>Upcoming</h1>
+              <p className="text-sm text-muted-foreground">
                 {formatDate(cycle.payday.date, { month: "short", day: "numeric" })} pay cycle
-              </div>
-              <div className="divide-y">
-                {cycle.items.map((event) => (
-                  <UpcomingRow
-                    key={event.id}
-                    event={event}
-                    completed={completedIds.has(event.id)}
-                    onToggle={() => toggleCompleted(event.id)}
-                  />
-                ))}
-              </div>
+              </p>
             </div>
-          ))}
-        </div>
+
+            <div className="overflow-hidden rounded-xl bg-muted/45">
+              {cycle.items.map((event, eventIndex) => (
+                <UpcomingRow
+                  key={event.id}
+                  event={event}
+                  completed={completedIds.has(event.id)}
+                  onToggle={() => toggleCompleted(event.id)}
+                  isLast={eventIndex === cycle.items.length - 1}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
 
         {upcoming.length > 6 && (
           <button
