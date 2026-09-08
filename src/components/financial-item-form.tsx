@@ -93,20 +93,24 @@ export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onD
 
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="shrink-0 border-b px-2 py-2">
-          <button
-            type="button"
-            onClick={() => setSelectionView(null)}
-            className="flex h-10 items-center gap-1 rounded-md px-2 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            Back
-          </button>
+        <div className="shrink-0 border-b px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Back"
+              onClick={() => setSelectionView(null)}
+              className="shrink-0"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <h2 className="text-base font-semibold">{title}</h2>
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4">
-          <div className="mx-auto w-full max-w-lg space-y-3">
-            <h2 className="px-1 text-base font-semibold">{title}</h2>
+          <div className="mx-auto w-full max-w-lg">
             <section className="overflow-hidden rounded-xl bg-muted/45">
               {isFrequency
                 ? frequencies.map((option, index) => (
@@ -180,7 +184,7 @@ export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onD
             </label>
 
             <label className={cn(rowClass, "border-b border-border/50")}>
-              <span className="text-sm">Amount</span>
+              <span className="text-sm">Amount (₱)</span>
               <Input
                 name="amount"
                 inputMode="decimal"
@@ -254,7 +258,7 @@ export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onD
       </div>
 
       <div className="shrink-0 border-t bg-background p-4">
-        <Button type="submit" className="w-full">{item ? "Save changes" : "Add item"}</Button>
+        <Button type="submit" size="default" className="w-full">{item ? "Save changes" : "Add item"}</Button>
       </div>
     </form>
   );
