@@ -17,7 +17,8 @@
     "react": "latest",
     "react-dom": "latest",
     "tailwind-merge": "latest",
-    "tw-animate-css": "latest"
+    "tw-animate-css": "latest",
+    "vaul": "latest"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "latest",
