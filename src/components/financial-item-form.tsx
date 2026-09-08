@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 const rowClass = "grid min-h-14 grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-4 px-4";
 const inputClass = "h-9 border-0 bg-transparent px-0 text-right shadow-none focus-visible:ring-0";
 
-type SelectionView = "account" | "from" | "to" | "frequency" | null;
+export type SelectionView = "account" | "from" | "to" | "frequency" | null;
 
 const frequencies = [
   { value: "weekly", label: "Weekly" },
@@ -65,11 +65,20 @@ function DrilldownRow({ label, value, onOpen, hasBorder = false }: { label: stri
   );
 }
 
-export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onDone?: () => void }) {
+export function FinancialItemForm({
+  item,
+  onDone,
+  selectionView,
+  onSelectionViewChange,
+}: {
+  item?: FinancialEvent;
+  onDone?: () => void;
+  selectionView: SelectionView;
+  onSelectionViewChange: (view: SelectionView) => void;
+}) {
   const router = useRouter();
   const [type, setType] = useState<EventType>(item?.type ?? "expense");
   const [repeat, setRepeat] = useState(Boolean(item?.recurring));
-  const [selectionView, setSelectionView] = useState<SelectionView>(null);
   const [accountId, setAccountId] = useState(item?.accountId ?? "bpi");
   const [fromAccountId, setFromAccountId] = useState(item?.fromAccountId ?? "bpi");
   const [toAccountId, setToAccountId] = useState(item?.toAccountId ?? "maya");
@@ -81,66 +90,40 @@ export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onD
 
   if (selectionView) {
     const isFrequency = selectionView === "frequency";
-    const title = isFrequency
-      ? "Frequency"
-      : selectionView === "from"
-        ? "From account"
-        : selectionView === "to"
-          ? "To account"
-          : "Account";
-
     const selectedAccountId = selectionView === "from" ? fromAccountId : selectionView === "to" ? toAccountId : accountId;
 
     return (
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="shrink-0 border-b px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Back"
-              onClick={() => setSelectionView(null)}
-              className="shrink-0"
-            >
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <h2 className="text-base font-semibold">{title}</h2>
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4">
-          <div className="mx-auto w-full max-w-lg">
-            <section className="overflow-hidden rounded-xl bg-muted/45">
-              {isFrequency
-                ? frequencies.map((option, index) => (
-                    <SelectionRow
-                      key={option.value}
-                      label={option.label}
-                      selected={frequency === option.value}
-                      isLast={index === frequencies.length - 1}
-                      onSelect={() => {
-                        setFrequency(option.value);
-                        setSelectionView(null);
-                      }}
-                    />
-                  ))
-                : accounts.map((account, index) => (
-                    <SelectionRow
-                      key={account.id}
-                      label={account.name}
-                      selected={selectedAccountId === account.id}
-                      isLast={index === accounts.length - 1}
-                      onSelect={() => {
-                        if (selectionView === "from") setFromAccountId(account.id);
-                        else if (selectionView === "to") setToAccountId(account.id);
-                        else setAccountId(account.id);
-                        setSelectionView(null);
-                      }}
-                    />
-                  ))}
-            </section>
-          </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4">
+        <div className="mx-auto w-full max-w-lg">
+          <section className="overflow-hidden rounded-xl bg-muted/45">
+            {isFrequency
+              ? frequencies.map((option, index) => (
+                  <SelectionRow
+                    key={option.value}
+                    label={option.label}
+                    selected={frequency === option.value}
+                    isLast={index === frequencies.length - 1}
+                    onSelect={() => {
+                      setFrequency(option.value);
+                      onSelectionViewChange(null);
+                    }}
+                  />
+                ))
+              : accounts.map((account, index) => (
+                  <SelectionRow
+                    key={account.id}
+                    label={account.name}
+                    selected={selectedAccountId === account.id}
+                    isLast={index === accounts.length - 1}
+                    onSelect={() => {
+                      if (selectionView === "from") setFromAccountId(account.id);
+                      else if (selectionView === "to") setToAccountId(account.id);
+                      else setAccountId(account.id);
+                      onSelectionViewChange(null);
+                    }}
+                  />
+                ))}
+          </section>
         </div>
       </div>
     );
@@ -204,11 +187,11 @@ export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onD
           <section className="overflow-hidden rounded-xl bg-muted/45">
             {type === "transfer" ? (
               <>
-                <DrilldownRow label="From" value={accountName(fromAccountId)} onOpen={() => setSelectionView("from")} hasBorder />
-                <DrilldownRow label="To" value={accountName(toAccountId)} onOpen={() => setSelectionView("to")} />
+                <DrilldownRow label="From" value={accountName(fromAccountId)} onOpen={() => onSelectionViewChange("from")} hasBorder />
+                <DrilldownRow label="To" value={accountName(toAccountId)} onOpen={() => onSelectionViewChange("to")} />
               </>
             ) : (
-              <DrilldownRow label="Account" value={accountName(accountId)} onOpen={() => setSelectionView("account")} />
+              <DrilldownRow label="Account" value={accountName(accountId)} onOpen={() => onSelectionViewChange("account")} />
             )}
           </section>
 
@@ -221,7 +204,7 @@ export function FinancialItemForm({ item, onDone }: { item?: FinancialEvent; onD
             </div>
 
             {repeat && (
-              <DrilldownRow label="Frequency" value={frequencyName} onOpen={() => setSelectionView("frequency")} />
+              <DrilldownRow label="Frequency" value={frequencyName} onOpen={() => onSelectionViewChange("frequency")} />
             )}
           </section>
 
