@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { FinancialItemForm } from "@/components/financial-item-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { events } from "@/lib/seed-data";
 
 export default async function EditItemPage({ params }: { params: Promise<{ id: string }> }) {
@@ -9,9 +8,10 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
   if (!item) notFound();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div><p className="text-sm text-muted-foreground">Plan item</p><h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Edit {item.title}</h1></div>
-      <Card><CardHeader><CardTitle>Financial item</CardTitle><CardDescription>Changes update the prototype forecast when persistence is added.</CardDescription></CardHeader><CardContent><FinancialItemForm item={item} /></CardContent></Card>
+    <div className="fixed inset-0 z-50 bg-black/20 sm:bg-black/25">
+      <div className="absolute inset-x-0 bottom-0 h-[88dvh] overflow-hidden rounded-t-2xl bg-background shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:h-full sm:w-[460px] sm:rounded-none sm:border-l">
+        <FinancialItemForm item={item} />
+      </div>
     </div>
   );
 }
