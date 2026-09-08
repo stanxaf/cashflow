@@ -9,17 +9,28 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@radix-ui/react-alert-dialog": "latest",
+    "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-select": "latest",
+    "@radix-ui/react-switch": "latest",
+    "class-variance-authority": "latest",
+    "clsx": "latest",
+    "lucide-react": "latest",
     "next": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "tailwind-merge": "latest",
+    "tw-animate-css": "latest",
+    "vaul": "latest"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "latest",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "tailwindcss": "latest",
     "typescript": "latest"
   }
 }
-
