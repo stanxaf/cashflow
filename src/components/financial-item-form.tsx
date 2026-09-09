@@ -286,14 +286,14 @@ export function FinancialItemForm({
                     type="button"
                     className="flex min-h-14 w-full items-center justify-center px-4 text-sm font-medium text-destructive transition-colors hover:bg-muted"
                   >
-                    Delete item
+                    Delete entry
                   </button>
                 </AlertDialogTrigger>
               </section>
 
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete item?</AlertDialogTitle>
+                  <AlertDialogTitle>Delete entry?</AlertDialogTitle>
                   <AlertDialogDescription>Delete {item.title}? This action cannot be undone.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -315,7 +315,7 @@ export function FinancialItemForm({
       </div>
 
       <div className="shrink-0 border-t bg-background p-4">
-        <Button type="submit" size="default" className="w-full">{submitLabel ?? (item ? "Save changes" : "Add item")}</Button>
+        <Button type="submit" size="default" className="w-full">{submitLabel ?? (item ? "Save changes" : "Add entry")}</Button>
       </div>
     </form>
   );
