@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { expandRecurringEvents } from "@/lib/recurrence";
 import {
   eventCashEffect,
   prototypeToday,
@@ -31,8 +32,16 @@ function sortEvents(input: FinancialEvent[]) {
   return [...input].sort((a, b) => a.date.localeCompare(b.date));
 }
 
+function addMonths(date: string, months: number) {
+  const [year, month, day] = date.split("-").map(Number);
+  const next = new Date(Date.UTC(year, month - 1 + months, day));
+  return next.toISOString().slice(0, 10);
+}
+
 function buildPayCycleSummaries(input: FinancialEvent[]): PayCycleSummary[] {
-  const upcoming = sortEvents(input.filter((event) => event.state !== "actual" && event.date > prototypeToday));
+  const horizonEnd = addMonths(prototypeToday, 3);
+  const storedUpcoming = input.filter((event) => event.state !== "actual" && event.date > prototypeToday);
+  const upcoming = expandRecurringEvents(storedUpcoming, horizonEnd);
   const paydays = upcoming.filter((event) => event.type === "income");
 
   return paydays.map((payday, index) => {
