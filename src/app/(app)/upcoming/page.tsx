@@ -136,7 +136,8 @@ export default function UpcomingPage() {
             <div className="overflow-hidden rounded-xl bg-muted/45">
               {items.map((event, index) => {
                 const completed = completedIds.has(event.id);
-                const checkpoint = event.type === "income" && event.cashAfter !== undefined;
+                const checkpointCashAfter = event.type === "income" ? event.cashAfter : undefined;
+                const checkpoint = typeof checkpointCashAfter === "number";
                 const isLastEvent = index === items.length - 1;
 
                 return (
@@ -187,7 +188,7 @@ export default function UpcomingPage() {
                       <div className={cn("grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-2 sm:px-3", !isLastEvent && "border-b border-border/50")}>
                         <span className="h-11 w-11" aria-hidden="true" />
                         <p className="text-sm text-muted-foreground">Projected position after payday</p>
-                        <p className="text-sm tabular-nums text-muted-foreground">{formatPHP(event.cashAfter)}</p>
+                        <p className="text-sm tabular-nums text-muted-foreground">{formatPHP(checkpointCashAfter)}</p>
                         <span className="h-11 w-11" aria-hidden="true" />
                       </div>
                     )}
