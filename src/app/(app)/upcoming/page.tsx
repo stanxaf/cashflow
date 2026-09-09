@@ -97,17 +97,9 @@ export default function UpcomingPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Upcoming</h1>
-            <p className="text-sm text-muted-foreground">A forward view of what is coming and what you are planning.</p>
-          </div>
-
-          {!isEmpty && (
-            <Link href="/paydays?item=new&mode=plan" className={buttonVariants({ variant: "outline" })}>
-              Make a plan
-            </Link>
-          )}
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Upcoming</h1>
+          <p className="text-sm text-muted-foreground">A forward view of what is coming next.</p>
         </div>
 
         {!isEmpty && (
@@ -141,18 +133,13 @@ export default function UpcomingPage() {
           <EmptyHeader>
             <EmptyTitle>Nothing coming up yet</EmptyTitle>
             <EmptyDescription>
-              Add something you expect to happen or make a plan for a future expense or income.
+              Add an income, expense, or transfer and it will appear here in date order.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Link href="/paydays?item=new&mode=plan" className={buttonVariants()}>
-                Make a plan
-              </Link>
-              <Link href="/paydays?item=new&from=upcoming" className={buttonVariants({ variant: "outline" })}>
-                Add item
-              </Link>
-            </div>
+            <Link href="/paydays?item=new&from=upcoming" className={buttonVariants()}>
+              Add entry
+            </Link>
           </EmptyContent>
         </Empty>
       ) : (
@@ -232,7 +219,7 @@ export default function UpcomingPage() {
           </div>
 
           {horizon === "3m" && (
-            <p className="px-1 text-xs text-muted-foreground">Later recurring rows are previews only. Editing the source item updates future previews.</p>
+            <p className="px-1 text-xs text-muted-foreground">Later recurring rows are previews only. Editing the source entry updates future previews.</p>
           )}
         </>
       )}
