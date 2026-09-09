@@ -5,6 +5,7 @@ import { Check, Pencil } from "lucide-react";
 import { useMemo, useState } from "react";
 import { usePrototypeStore } from "@/components/prototype-store";
 import { buttonVariants } from "@/components/ui/button";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { prototypeToday, type FinancialEvent } from "@/lib/seed-data";
 import { cn, formatDate, formatPHP } from "@/lib/utils";
 
@@ -136,14 +137,14 @@ export default function UpcomingPage() {
       </header>
 
       {isEmpty ? (
-        <section className="flex min-h-[320px] items-center justify-center py-12">
-          <div className="max-w-sm space-y-4 text-center">
-            <div className="space-y-1.5">
-              <h2 className="text-base font-semibold">Nothing coming up yet</h2>
-              <p className="text-sm leading-6 text-muted-foreground">
-                Add something you expect to happen or make a plan for a future expense or income.
-              </p>
-            </div>
+        <Empty className="min-h-[320px] py-12">
+          <EmptyHeader>
+            <EmptyTitle>Nothing coming up yet</EmptyTitle>
+            <EmptyDescription>
+              Add something you expect to happen or make a plan for a future expense or income.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
             <div className="flex flex-wrap justify-center gap-2">
               <Link href="/paydays?item=new&mode=plan" className={buttonVariants()}>
                 Make a plan
@@ -152,8 +153,8 @@ export default function UpcomingPage() {
                 Add item
               </Link>
             </div>
-          </div>
-        </section>
+          </EmptyContent>
+        </Empty>
       ) : (
         <>
           <div className="space-y-7">
