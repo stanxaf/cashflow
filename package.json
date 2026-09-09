@@ -9,6 +9,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@base-ui/react": "latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-dialog": "latest",
     "@radix-ui/react-select": "latest",
@@ -19,7 +20,6 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "sonner": "latest",
     "tailwind-merge": "latest",
     "tw-animate-css": "latest",
     "vaul": "latest"
