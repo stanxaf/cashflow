@@ -5,11 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronLeft, Pencil, X } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { FinancialItemForm, type SelectionView } from "@/components/financial-item-form";
+import { usePrototypeStore } from "@/components/prototype-store";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { FinancialEvent } from "@/lib/seed-data";
-import { events, payCycleSummaries } from "@/lib/seed-data";
 import { cn, formatDate, formatPHP } from "@/lib/utils";
 
 function timingLabel(type: string, date: string) {
@@ -66,14 +66,22 @@ function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialE
 function PaydaysContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const {
+    events,
+    completedIds,
+    payCycleSummaries: cycles,
+    saveEvent,
+    deleteEvent,
+    toggleCompleted,
+    schedulePlan,
+  } = usePrototypeStore();
   const [isTablet, setIsTablet] = useState(false);
   const [selectionView, setSelectionView] = useState<SelectionView>(null);
-  const cycles = payCycleSummaries();
   const nextCycle = cycles[0];
   const followingCycle = cycles[1];
   const itemParam = searchParams.get("item");
   const isPlanMode = itemParam === "new" && searchParams.get("mode") === "plan";
+  const returnToUpcoming = isPlanMode || searchParams.get("from") === "upcoming";
   const editingItem = itemParam && itemParam !== "new" ? events.find((event) => event.id === itemParam) : undefined;
   const editorOpen = itemParam === "new" || Boolean(editingItem);
 
@@ -87,16 +95,7 @@ function PaydaysContent() {
 
   function closeEditor() {
     setSelectionView(null);
-    router.replace(isPlanMode ? "/upcoming" : "/paydays");
-  }
-
-  function toggleCompleted(id: string) {
-    setCompletedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    router.replace(returnToUpcoming ? "/upcoming" : "/paydays");
   }
 
   const editorTitle = editingItem ? `Edit ${editingItem.title}` : isPlanMode ? "Make a plan" : "Add item";
@@ -107,6 +106,10 @@ function PaydaysContent() {
     <FinancialItemForm
       item={editingItem}
       onDone={closeEditor}
+      onSave={saveEvent}
+      onDelete={deleteEvent}
+      onSchedulePlan={schedulePlan}
+      newItemState={isPlanMode ? "planned" : "scheduled"}
       selectionView={selectionView}
       onSelectionViewChange={setSelectionView}
       submitLabel={isPlanMode ? "Add plan" : undefined}
