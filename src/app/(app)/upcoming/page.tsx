@@ -59,8 +59,7 @@ function monthKey(date: string) {
 }
 
 function amountPrefix(event: TimelineEvent) {
-  if (event.type === "income") return "+";
-  return "−";
+  return event.type === "income" ? "+" : "−";
 }
 
 export default function UpcomingPage() {
@@ -95,7 +94,7 @@ export default function UpcomingPage() {
             <p className="text-sm text-muted-foreground">A forward view of what is coming and what you are planning.</p>
           </div>
 
-          <Link href="/paydays?item=new&mode=plan" className={buttonVariants()}>
+          <Link href="/paydays?item=new&mode=plan" className={buttonVariants({ variant: "outline" })}>
             Make a plan
           </Link>
         </div>
@@ -136,12 +135,12 @@ export default function UpcomingPage() {
             <div className="overflow-hidden rounded-xl bg-muted/45">
               {items.map((event, index) => {
                 const completed = completedIds.has(event.id);
-                const isLast = index === items.length - 1;
-                const checkpoint = event.type === "income";
+                const isLastEvent = index === items.length - 1;
+                const checkpoint = event.type === "income" && event.cashAfter !== undefined;
 
                 return (
-                  <div key={event.id} className={cn(!isLast && "border-b border-border/50")}>
-                    <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-1.5 sm:px-3">
+                  <div key={event.id}>
+                    <div className={cn("grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-1.5 sm:px-3", (!isLastEvent || checkpoint) && "border-b border-border/50")}>
                       <button
                         type="button"
                         disabled={event.preview}
@@ -183,10 +182,12 @@ export default function UpcomingPage() {
                       )}
                     </div>
 
-                    {checkpoint && event.cashAfter !== undefined && (
-                      <div className="flex items-center justify-between gap-4 px-4 pb-3 pl-16 text-sm text-muted-foreground sm:pl-[4.75rem]">
-                        <span>Projected position after payday</span>
-                        <span className="tabular-nums">{formatPHP(event.cashAfter)}</span>
+                    {checkpoint && (
+                      <div className={cn("grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-2 sm:px-3", !isLastEvent && "border-b border-border/50")}>
+                        <span className="h-11 w-11" aria-hidden="true" />
+                        <p className="text-sm text-muted-foreground">Projected position after payday</p>
+                        <p className="text-sm tabular-nums text-muted-foreground">{formatPHP(event.cashAfter)}</p>
+                        <span className="h-11 w-11" aria-hidden="true" />
                       </div>
                     )}
                   </div>
