@@ -6,11 +6,12 @@ import { useMemo, useState } from "react";
 import { usePrototypeStore } from "@/components/prototype-store";
 import { buttonVariants } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { expandRecurringEvents, type ExpandedFinancialEvent } from "@/lib/recurrence";
 import { prototypeToday, type FinancialEvent } from "@/lib/seed-data";
 import { cn, formatDate, formatPHP } from "@/lib/utils";
 
 type Horizon = "30d" | "3m";
-type TimelineEvent = FinancialEvent & { preview?: boolean; cashAfter?: number };
+type TimelineEvent = ExpandedFinancialEvent & { cashAfter?: number };
 
 function addDays(date: string, days: number) {
   const [year, month, day] = date.split("-").map(Number);
@@ -50,25 +51,12 @@ export default function UpcomingPage() {
 
   const timeline = useMemo(() => {
     const horizonEnd = horizon === "30d" ? addDays(prototypeToday, 30) : addMonths(prototypeToday, 3);
-    const generated: TimelineEvent[] = [];
+    const visible = expandRecurringEvents(upcomingEvents, horizonEnd).filter((event) => event.date <= horizonEnd);
 
-    if (horizon === "3m") {
-      for (const event of upcomingEvents.filter((item) => item.recurring)) {
-        for (let offset = 1; offset <= 3; offset += 1) {
-          const date = addMonths(event.date, offset);
-          if (date > horizonEnd) continue;
-          generated.push({ ...event, id: `${event.id}-preview-${offset}`, date, state: "scheduled", preview: true });
-        }
-      }
-    }
-
-    const visible = [...upcomingEvents, ...generated]
-      .filter((event) => event.date <= horizonEnd)
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    return forecastFor(visible).map((event) => ({
+    return forecastFor(visible as FinancialEvent[]).map((event) => ({
       ...event,
-      preview: generated.some((preview) => preview.id === event.id),
+      preview: visible.find((item) => item.id === event.id)?.preview,
+      sourceId: visible.find((item) => item.id === event.id)?.sourceId,
     }));
   }, [forecastFor, horizon, upcomingEvents]);
 
