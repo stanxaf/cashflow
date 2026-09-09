@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
-  events as seedEvents,
   estimatedPositionToday,
   eventCashEffect,
   prototypeToday,
@@ -24,8 +23,8 @@ type PrototypeStore = {
   forecastFor: (input: FinancialEvent[]) => Array<FinancialEvent & { cashAfter: number }>;
 };
 
-const STORAGE_KEY = "cashflow-prototype-events-v1";
-const COMPLETED_KEY = "cashflow-prototype-completed-v1";
+const STORAGE_KEY = "cashflow-prototype-events-v2";
+const COMPLETED_KEY = "cashflow-prototype-completed-v2";
 
 const PrototypeStoreContext = createContext<PrototypeStore | null>(null);
 
@@ -48,7 +47,7 @@ function buildPayCycleSummaries(input: FinancialEvent[]): PayCycleSummary[] {
 }
 
 export function PrototypeStoreProvider({ children }: { children: React.ReactNode }) {
-  const [events, setEvents] = useState<FinancialEvent[]>(seedEvents);
+  const [events, setEvents] = useState<FinancialEvent[]>([]);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [hydrated, setHydrated] = useState(false);
 
@@ -59,7 +58,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
       if (savedEvents) setEvents(JSON.parse(savedEvents) as FinancialEvent[]);
       if (savedCompleted) setCompletedIds(new Set(JSON.parse(savedCompleted) as string[]));
     } catch {
-      // Keep deterministic seed data if local prototype storage is unavailable.
+      // Keep the prototype empty if local storage is unavailable.
     } finally {
       setHydrated(true);
     }
