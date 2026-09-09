@@ -17,7 +17,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { accounts, type EventType, type FinancialEvent } from "@/lib/seed-data";
+import { accounts, type EventState, type EventType, type FinancialEvent } from "@/lib/seed-data";
 import { cn } from "@/lib/utils";
 
 const rowClass = "grid min-h-14 grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-4 px-4";
@@ -31,6 +31,10 @@ const frequencies = [
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
 ];
+
+function frequencyValue(recurring?: string) {
+  return frequencies.find((option) => option.label.toLowerCase() === recurring?.toLowerCase())?.value ?? "monthly";
+}
 
 function SelectionRow({ label, selected, onSelect, isLast }: { label: string; selected: boolean; onSelect: () => void; isLast: boolean }) {
   return (
@@ -68,12 +72,20 @@ function DrilldownRow({ label, value, onOpen, hasBorder = false }: { label: stri
 export function FinancialItemForm({
   item,
   onDone,
+  onSave,
+  onDelete,
+  onSchedulePlan,
+  newItemState = "scheduled",
   selectionView,
   onSelectionViewChange,
   submitLabel,
 }: {
   item?: FinancialEvent;
   onDone?: () => void;
+  onSave?: (event: Omit<FinancialEvent, "id"> & { id?: string }) => void;
+  onDelete?: (id: string) => void;
+  onSchedulePlan?: (id: string) => void;
+  newItemState?: EventState;
   selectionView: SelectionView;
   onSelectionViewChange: (view: SelectionView) => void;
   submitLabel?: string;
@@ -84,7 +96,7 @@ export function FinancialItemForm({
   const [accountId, setAccountId] = useState(item?.accountId ?? "bpi");
   const [fromAccountId, setFromAccountId] = useState(item?.fromAccountId ?? "bpi");
   const [toAccountId, setToAccountId] = useState(item?.toAccountId ?? "maya");
-  const [frequency, setFrequency] = useState("monthly");
+  const [frequency, setFrequency] = useState(frequencyValue(item?.recurring));
   const finish = onDone ?? (() => router.push("/paydays"));
 
   const accountName = (id: string) => accounts.find((account) => account.id === id)?.name ?? "Select";
@@ -134,16 +146,27 @@ export function FinancialItemForm({
   return (
     <form
       className="flex min-h-0 flex-1 flex-col"
-      onSubmit={(event) => {
-        event.preventDefault();
+      onSubmit={(formEvent) => {
+        formEvent.preventDefault();
+        const form = new FormData(formEvent.currentTarget);
+        const amount = Math.round(Number(form.get("amount") ?? 0) * 100);
+        const recurring = repeat ? frequencyName : undefined;
+        const base = {
+          id: item?.id,
+          title: String(form.get("title") ?? ""),
+          date: String(form.get("date") ?? ""),
+          amount,
+          type,
+          state: item?.state ?? newItemState,
+          recurring,
+        };
+
+        onSave?.(type === "transfer"
+          ? { ...base, fromAccountId, toAccountId }
+          : { ...base, accountId });
         finish();
       }}
     >
-      <input type="hidden" name="accountId" value={accountId} />
-      <input type="hidden" name="fromAccountId" value={fromAccountId} />
-      <input type="hidden" name="toAccountId" value={toAccountId} />
-      <input type="hidden" name="frequency" value={frequency} />
-
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-2">
         <div className="mx-auto w-full max-w-lg space-y-5">
           <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
@@ -210,7 +233,22 @@ export function FinancialItemForm({
             )}
           </section>
 
-          {item && (
+          {item?.state === "planned" && onSchedulePlan && (
+            <section className="overflow-hidden rounded-xl bg-muted/45">
+              <button
+                type="button"
+                className="flex min-h-14 w-full items-center justify-center px-4 text-sm font-medium transition-colors hover:bg-muted"
+                onClick={() => {
+                  onSchedulePlan(item.id);
+                  finish();
+                }}
+              >
+                Convert to scheduled
+              </button>
+            </section>
+          )}
+
+          {item && onDelete && (
             <AlertDialog>
               <section className="overflow-hidden rounded-xl bg-muted/45">
                 <AlertDialogTrigger asChild>
@@ -226,13 +264,17 @@ export function FinancialItemForm({
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete item?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Delete {item.title}? This action cannot be undone.
-                  </AlertDialogDescription>
+                  <AlertDialogDescription>Delete {item.title}? This action cannot be undone.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={finish}>
+                  <AlertDialogAction
+                    className={buttonVariants({ variant: "destructive" })}
+                    onClick={() => {
+                      onDelete(item.id);
+                      finish();
+                    }}
+                  >
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
