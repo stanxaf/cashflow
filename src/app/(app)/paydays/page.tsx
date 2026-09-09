@@ -8,6 +8,7 @@ import { FinancialItemForm, type SelectionView } from "@/components/financial-it
 import { usePrototypeStore } from "@/components/prototype-store";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { FinancialEvent } from "@/lib/seed-data";
 import { cn, formatDate, formatPHP } from "@/lib/utils";
@@ -120,19 +121,19 @@ function PaydaysContent() {
   return (
     <>
       {isEmpty ? (
-        <section className="flex min-h-[420px] items-center justify-center py-12">
-          <div className="max-w-sm space-y-4 text-center">
-            <div className="space-y-1.5">
-              <h1 className="text-xl font-semibold tracking-tight">Start your cashflow</h1>
-              <p className="text-sm leading-6 text-muted-foreground">
-                Add your income and upcoming expenses. Paydays will group them into pay cycles and show what is left after each one.
-              </p>
-            </div>
+        <Empty className="min-h-[420px] py-12">
+          <EmptyHeader>
+            <EmptyTitle>Start your cashflow</EmptyTitle>
+            <EmptyDescription>
+              Add your income and upcoming expenses. Paydays will group them into pay cycles and show what is left after each one.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
             <Link href="/paydays?item=new" className={buttonVariants()}>
               Add first item
             </Link>
-          </div>
-        </section>
+          </EmptyContent>
+        </Empty>
       ) : (
         <div className="space-y-6">
           <section className="grid gap-8 pb-2 sm:grid-cols-2 sm:gap-12">
