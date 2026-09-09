@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -179,6 +180,7 @@ export function FinancialItemForm({
         onSave?.(type === "transfer"
           ? { ...base, fromAccountId, toAccountId }
           : { ...base, accountId });
+        toast.success(item ? "Changes saved" : "Entry added");
         finish();
       }}
     >
@@ -203,39 +205,17 @@ export function FinancialItemForm({
           <section className="overflow-hidden rounded-xl bg-muted/45">
             <label className={cn(rowClass, "border-b border-border/50")}>
               <span className="text-sm">Title</span>
-              <Input
-                name="title"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Required"
-                required
-                className={inputClass}
-              />
+              <Input name="title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Required" required className={inputClass} />
             </label>
 
             <label className={cn(rowClass, "border-b border-border/50")}>
               <span className="text-sm">Amount (₱)</span>
-              <Input
-                name="amount"
-                inputMode="decimal"
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                placeholder="0.00"
-                required
-                className={inputClass}
-              />
+              <Input name="amount" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required className={inputClass} />
             </label>
 
             <label className={rowClass}>
               <span className="text-sm">{type === "income" ? "Expected" : "Due"}</span>
-              <Input
-                name="date"
-                type="date"
-                value={date}
-                onChange={(event) => setDate(event.target.value)}
-                required
-                className={inputClass}
-              />
+              <Input name="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} required className={inputClass} />
             </label>
           </section>
 
@@ -258,21 +238,12 @@ export function FinancialItemForm({
               </div>
             </div>
 
-            {repeat && (
-              <DrilldownRow label="Frequency" value={frequencyName} onOpen={() => onSelectionViewChange("frequency")} />
-            )}
+            {repeat && <DrilldownRow label="Frequency" value={frequencyName} onOpen={() => onSelectionViewChange("frequency")} />}
           </section>
 
           {item?.state === "planned" && onSchedulePlan && (
             <section className="overflow-hidden rounded-xl bg-muted/45">
-              <button
-                type="button"
-                className="flex min-h-14 w-full items-center justify-center px-4 text-sm font-medium transition-colors hover:bg-muted"
-                onClick={() => {
-                  onSchedulePlan(item.id);
-                  finish();
-                }}
-              >
+              <button type="button" className="flex min-h-14 w-full items-center justify-center px-4 text-sm font-medium transition-colors hover:bg-muted" onClick={() => { onSchedulePlan(item.id); finish(); }}>
                 Convert to scheduled
               </button>
             </section>
@@ -282,10 +253,7 @@ export function FinancialItemForm({
             <AlertDialog>
               <section className="overflow-hidden rounded-xl bg-muted/45">
                 <AlertDialogTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex min-h-14 w-full items-center justify-center px-4 text-sm font-medium text-destructive transition-colors hover:bg-muted"
-                  >
+                  <button type="button" className="flex min-h-14 w-full items-center justify-center px-4 text-sm font-medium text-destructive transition-colors hover:bg-muted">
                     Delete entry
                   </button>
                 </AlertDialogTrigger>
@@ -298,13 +266,7 @@ export function FinancialItemForm({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    className={buttonVariants({ variant: "destructive" })}
-                    onClick={() => {
-                      onDelete(item.id);
-                      finish();
-                    }}
-                  >
+                  <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={() => { onDelete(item.id); finish(); }}>
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
