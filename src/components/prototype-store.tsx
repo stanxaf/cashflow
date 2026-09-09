@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
-  estimatedPositionToday,
   eventCashEffect,
   prototypeToday,
   type FinancialEvent,
@@ -120,7 +119,9 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   }
 
   function forecastFor(input: FinancialEvent[]) {
-    let running = estimatedPositionToday();
+    // Clean-start prototype: until account setup exists, forecasts begin at zero
+    // so projected positions only reflect the events the user entered.
+    let running = 0;
     return sortEvents(input).map((event) => {
       running += eventCashEffect(event);
       return { ...event, cashAfter: running };
