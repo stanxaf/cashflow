@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className={cn(buttonVariants({ size: "sm" }), "ml-auto shrink-0 gap-2")}
           >
             <Plus className="h-4 w-4" />
-            <span>Add item</span>
+            <span>Add entry</span>
           </Link>
         </div>
       </header>
