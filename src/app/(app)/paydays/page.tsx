@@ -85,7 +85,8 @@ function PaydaysContent() {
   const returnToUpcoming = isPlanMode || searchParams.get("from") === "upcoming";
   const editingItem = itemParam && itemParam !== "new" ? events.find((event) => event.id === itemParam) : undefined;
   const editorOpen = itemParam === "new" || Boolean(editingItem);
-  const isEmpty = events.length === 0;
+  const hasNoEvents = events.length === 0;
+  const hasNoPayCycles = cycles.length === 0;
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 768px)");
@@ -120,17 +121,19 @@ function PaydaysContent() {
 
   return (
     <>
-      {isEmpty ? (
+      {hasNoPayCycles ? (
         <Empty className="min-h-[420px] py-12">
           <EmptyHeader>
-            <EmptyTitle>Start your cashflow</EmptyTitle>
+            <EmptyTitle>{hasNoEvents ? "Start your cashflow" : "Add your first payday"}</EmptyTitle>
             <EmptyDescription>
-              Add your income and upcoming expenses. Paydays will group them into pay cycles and show what is left after each one.
+              {hasNoEvents
+                ? "Add your income and upcoming expenses. Paydays will group them into pay cycles and show what is left after each one."
+                : "You have upcoming items, but Paydays needs an income item to create your first pay cycle."}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Link href="/paydays?item=new" className={buttonVariants()}>
-              Add first item
+              {hasNoEvents ? "Add first item" : "Add income"}
             </Link>
           </EmptyContent>
         </Empty>
