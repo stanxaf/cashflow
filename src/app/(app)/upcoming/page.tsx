@@ -59,7 +59,8 @@ function monthKey(date: string) {
 }
 
 function amountPrefix(event: TimelineEvent) {
-  return event.type === "income" ? "+" : "−";
+  if (event.type === "income") return "+";
+  return "−";
 }
 
 export default function UpcomingPage() {
@@ -135,12 +136,12 @@ export default function UpcomingPage() {
             <div className="overflow-hidden rounded-xl bg-muted/45">
               {items.map((event, index) => {
                 const completed = completedIds.has(event.id);
-                const isLastEvent = index === items.length - 1;
                 const checkpoint = event.type === "income" && event.cashAfter !== undefined;
+                const isLastEvent = index === items.length - 1;
 
                 return (
                   <div key={event.id}>
-                    <div className={cn("grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-1.5 sm:px-3", (!isLastEvent || checkpoint) && "border-b border-border/50")}>
+                    <div className={cn("grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-1.5 sm:px-3", !isLastEvent || checkpoint ? "border-b border-border/50" : undefined)}>
                       <button
                         type="button"
                         disabled={event.preview}
