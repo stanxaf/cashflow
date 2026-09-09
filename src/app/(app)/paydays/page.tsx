@@ -77,6 +77,7 @@ function PaydaysContent() {
     events,
     completedIds,
     payCycleSummaries: cycles,
+    unassignedEntries,
     saveEvent,
     deleteEvent,
     toggleCompleted,
@@ -178,6 +179,20 @@ function PaydaysContent() {
               </div>
             ))}
           </section>
+
+          {unassignedEntries.length > 0 && (
+            <section className="space-y-2">
+              <div className="px-1">
+                <p className="text-sm font-medium">Unassigned to a payday</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">These entries are after your last known payday. Add another income entry or recurrence to place them into a pay cycle.</p>
+              </div>
+              <div className="overflow-hidden rounded-xl bg-muted/45">
+                {unassignedEntries.map((event, index) => (
+                  <UpcomingRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={index === unassignedEntries.length - 1} />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
 
