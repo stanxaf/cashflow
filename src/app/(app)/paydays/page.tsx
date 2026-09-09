@@ -37,7 +37,7 @@ function selectionTitle(view: SelectionView) {
   return null;
 }
 
-function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialEvent; completed: boolean; onToggle: () => void; isLast: boolean }) {
+function EntryRow({ event, completed, onToggle, isLast }: { event: FinancialEvent; completed: boolean; onToggle: () => void; isLast: boolean }) {
   const isPreview = event.id.includes("-preview-");
 
   return (
@@ -88,7 +88,6 @@ function PaydaysContent() {
   const nextCycle = cycles[0];
   const followingCycle = cycles[1];
   const itemParam = searchParams.get("item");
-  const returnToUpcoming = searchParams.get("from") === "upcoming";
   const editingItem = itemParam && itemParam !== "new" ? events.find((event) => event.id === itemParam) : undefined;
   const editorOpen = itemParam === "new" || Boolean(editingItem);
   const hasNoEvents = events.length === 0;
@@ -104,7 +103,7 @@ function PaydaysContent() {
 
   function closeEditor() {
     setSelectionView(null);
-    router.replace(returnToUpcoming ? "/upcoming" : "/paydays");
+    router.replace("/paydays");
   }
 
   const editorTitle = editingItem ? `Edit ${editingItem.title}` : "Add entry";
@@ -125,70 +124,76 @@ function PaydaysContent() {
 
   return (
     <>
-      {hasNoPayCycles ? (
+      {hasNoEvents ? (
         <Empty className="min-h-[420px] py-12">
           <EmptyHeader>
-            <EmptyTitle>{hasNoEvents ? "Start your cashflow" : "Add your first payday"}</EmptyTitle>
-            <EmptyDescription>
-              {hasNoEvents
-                ? "Add your income and upcoming expenses. Paydays will group them into pay cycles and show what is left after each one."
-                : "You have upcoming entries, but Paydays needs an income entry to create your first pay cycle."}
-            </EmptyDescription>
+            <EmptyTitle>Start your cashflow</EmptyTitle>
+            <EmptyDescription>Add your income and upcoming expenses. Paydays will group them into pay cycles and show what is left after each one.</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Link href="/paydays?item=new" className={buttonVariants()}>
-              {hasNoEvents ? "Add first entry" : "Add income"}
-            </Link>
+            <Link href="/paydays?item=new" className={buttonVariants()}>Add first entry</Link>
           </EmptyContent>
         </Empty>
       ) : (
         <div className="space-y-6">
-          <section className="grid gap-8 pb-2 sm:grid-cols-2 sm:gap-12">
-            {nextCycle && (
-              <div className="space-y-3">
-                <p className="text-sm font-medium">Next payday · {formatDate(nextCycle.payday.date, { month: "short", day: "numeric" })}</p>
-                <div>
-                  <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
-                  <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(nextCycle.result))}</p>
-                </div>
-                <p className="text-sm text-muted-foreground">{formatPHP(nextCycle.income)} income · {formatPHP(nextCycle.needed)} needed</p>
+          {hasNoPayCycles ? (
+            <section className="space-y-4">
+              <div className="px-1">
+                <p className="text-sm font-medium">Add your first payday</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">Your entries are saved below. Add an income entry to start grouping them into pay cycles.</p>
               </div>
-            )}
+              <Link href="/paydays?item=new" className={buttonVariants({ size: "sm" })}>Add income</Link>
+            </section>
+          ) : (
+            <>
+              <section className="grid gap-8 pb-2 sm:grid-cols-2 sm:gap-12">
+                {nextCycle && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Next payday · {formatDate(nextCycle.payday.date, { month: "short", day: "numeric" })}</p>
+                    <div>
+                      <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
+                      <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(nextCycle.result))}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{formatPHP(nextCycle.income)} income · {formatPHP(nextCycle.needed)} needed</p>
+                  </div>
+                )}
 
-            {followingCycle && (
-              <div className="space-y-3">
-                <p className="text-sm font-medium">Following payday · {formatDate(followingCycle.payday.date, { month: "short", day: "numeric" })}</p>
-                <div>
-                  <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
-                  <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(followingCycle.result))}</p>
-                </div>
-                <p className="text-sm text-muted-foreground">{formatPHP(followingCycle.income)} income · {formatPHP(followingCycle.needed)} needed</p>
-              </div>
-            )}
-          </section>
+                {followingCycle && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Following payday · {formatDate(followingCycle.payday.date, { month: "short", day: "numeric" })}</p>
+                    <div>
+                      <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
+                      <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(followingCycle.result))}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{formatPHP(followingCycle.income)} income · {formatPHP(followingCycle.needed)} needed</p>
+                  </div>
+                )}
+              </section>
 
-          <section className="space-y-4">
-            {cycles.map((cycle) => (
-              <div key={cycle.payday.id} className="space-y-2">
-                <p className="text-sm font-medium">Payday · {formatDate(cycle.payday.date, { month: "short", day: "numeric" })}</p>
-                <div className="overflow-hidden rounded-xl bg-muted/45">
-                  {cycle.items.map((event, eventIndex) => (
-                    <UpcomingRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={eventIndex === cycle.items.length - 1} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </section>
+              <section className="space-y-4">
+                {cycles.map((cycle) => (
+                  <div key={cycle.payday.id} className="space-y-2">
+                    <p className="text-sm font-medium">Payday · {formatDate(cycle.payday.date, { month: "short", day: "numeric" })}</p>
+                    <div className="overflow-hidden rounded-xl bg-muted/45">
+                      {cycle.items.map((event, eventIndex) => (
+                        <EntryRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={eventIndex === cycle.items.length - 1} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </section>
+            </>
+          )}
 
           {unassignedEntries.length > 0 && (
             <section className="space-y-2">
               <div className="px-1">
-                <p className="text-sm font-medium">Unassigned to a payday</p>
-                <p className="mt-0.5 text-sm text-muted-foreground">These entries are after your last known payday. Add another income entry or recurrence to place them into a pay cycle.</p>
+                <p className="text-sm font-medium">{hasNoPayCycles ? "Entries" : "Unassigned to a payday"}</p>
+                {!hasNoPayCycles && <p className="mt-0.5 text-sm text-muted-foreground">These entries are after your last known payday. Add another income entry or recurrence to place them into a pay cycle.</p>}
               </div>
               <div className="overflow-hidden rounded-xl bg-muted/45">
                 {unassignedEntries.map((event, index) => (
-                  <UpcomingRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={index === unassignedEntries.length - 1} />
+                  <EntryRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={index === unassignedEntries.length - 1} />
                 ))}
               </div>
             </section>
@@ -210,9 +215,7 @@ function PaydaysContent() {
               </div>
             </DrawerHeader>
             <DrawerClose asChild>
-              <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close">
-                <X className="h-4 w-4" />
-              </Button>
+              <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close"><X className="h-4 w-4" /></Button>
             </DrawerClose>
             {editorForm}
           </DrawerContent>
@@ -223,9 +226,7 @@ function PaydaysContent() {
             <SheetHeader className="border-b px-4 py-4 pr-12 text-left">
               <div className="flex items-center gap-2">
                 {selectionView && (
-                  <Button type="button" variant="ghost" size="icon" aria-label="Back" onClick={() => setSelectionView(null)} className="-ml-2 shrink-0">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
+                  <Button type="button" variant="ghost" size="icon" aria-label="Back" onClick={() => setSelectionView(null)} className="-ml-2 shrink-0"><ChevronLeft className="h-4 w-4" /></Button>
                 )}
                 <SheetTitle>{currentTitle}</SheetTitle>
               </div>
