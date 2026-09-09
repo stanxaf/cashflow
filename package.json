@@ -19,6 +19,7 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "sonner": "latest",
     "tailwind-merge": "latest",
     "tw-animate-css": "latest",
     "vaul": "latest"
