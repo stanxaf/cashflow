@@ -38,10 +38,12 @@ function selectionTitle(view: SelectionView) {
 }
 
 function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialEvent; completed: boolean; onToggle: () => void; isLast: boolean }) {
+  const isPreview = event.id.includes("-preview-");
+
   return (
     <div className={cn("grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-1.5 sm:px-3", !isLast && "border-b border-border/50", completed && "text-muted-foreground")}>
-      <button type="button" aria-label={completed ? `Mark ${event.title} as upcoming` : `Mark ${event.title} as complete`} aria-pressed={completed} onClick={onToggle} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        <span className={cn("flex h-5 w-5 items-center justify-center rounded-full border transition-colors", completed ? "border-foreground bg-foreground text-background" : "border-muted-foreground/50")}>
+      <button type="button" disabled={isPreview} aria-label={completed ? `Mark ${event.title} as upcoming` : `Mark ${event.title} as complete`} aria-pressed={completed} onClick={onToggle} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default">
+        <span className={cn("flex h-5 w-5 items-center justify-center rounded-full border transition-colors", completed ? "border-foreground bg-foreground text-background" : "border-muted-foreground/50", isPreview && "opacity-40")}>
           {completed && <Check className="h-3.5 w-3.5" />}
         </span>
       </button>
@@ -49,7 +51,7 @@ function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialE
       <div className="min-w-0 py-2">
         <p className={cn("truncate text-sm font-medium", completed && "line-through")}>{event.title}</p>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          {completed ? completedTimingLabel(event.type, event.date) : `${timingLabel(event.type, event.date)}${event.state === "planned" ? " · Planned" : ""}`}
+          {completed ? completedTimingLabel(event.type, event.date) : `${timingLabel(event.type, event.date)}${isPreview ? " · Recurring preview" : event.state === "planned" ? " · Planned" : ""}`}
         </p>
       </div>
 
@@ -57,9 +59,13 @@ function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialE
         {event.type === "income" ? "+" : "−"}{formatPHP(event.amount)}
       </p>
 
-      <Link href={`/paydays?item=${event.id}`} aria-label={`Edit ${event.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        <Pencil className="h-4 w-4" />
-      </Link>
+      {isPreview ? (
+        <span className="h-11 w-11" aria-hidden="true" />
+      ) : (
+        <Link href={`/paydays?item=${event.id}`} aria-label={`Edit ${event.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Pencil className="h-4 w-4" />
+        </Link>
+      )}
     </div>
   );
 }
