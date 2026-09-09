@@ -81,8 +81,7 @@ function PaydaysContent() {
   const nextCycle = cycles[0];
   const followingCycle = cycles[1];
   const itemParam = searchParams.get("item");
-  const isPlanMode = itemParam === "new" && searchParams.get("mode") === "plan";
-  const returnToUpcoming = isPlanMode || searchParams.get("from") === "upcoming";
+  const returnToUpcoming = searchParams.get("from") === "upcoming";
   const editingItem = itemParam && itemParam !== "new" ? events.find((event) => event.id === itemParam) : undefined;
   const editorOpen = itemParam === "new" || Boolean(editingItem);
   const hasNoEvents = events.length === 0;
@@ -101,7 +100,7 @@ function PaydaysContent() {
     router.replace(returnToUpcoming ? "/upcoming" : "/paydays");
   }
 
-  const editorTitle = editingItem ? `Edit ${editingItem.title}` : isPlanMode ? "Make a plan" : "Add item";
+  const editorTitle = editingItem ? `Edit ${editingItem.title}` : "Add entry";
   const drilldownTitle = selectionTitle(selectionView);
   const currentTitle = drilldownTitle ?? editorTitle;
 
@@ -112,10 +111,8 @@ function PaydaysContent() {
       onSave={saveEvent}
       onDelete={deleteEvent}
       onSchedulePlan={schedulePlan}
-      newItemState={isPlanMode ? "planned" : "scheduled"}
       selectionView={selectionView}
       onSelectionViewChange={setSelectionView}
-      submitLabel={isPlanMode ? "Add plan" : undefined}
     />
   );
 
@@ -128,12 +125,12 @@ function PaydaysContent() {
             <EmptyDescription>
               {hasNoEvents
                 ? "Add your income and upcoming expenses. Paydays will group them into pay cycles and show what is left after each one."
-                : "You have upcoming items, but Paydays needs an income item to create your first pay cycle."}
+                : "You have upcoming entries, but Paydays needs an income entry to create your first pay cycle."}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Link href="/paydays?item=new" className={buttonVariants()}>
-              {hasNoEvents ? "Add first item" : "Add income"}
+              {hasNoEvents ? "Add first entry" : "Add income"}
             </Link>
           </EmptyContent>
         </Empty>
