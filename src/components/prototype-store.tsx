@@ -20,6 +20,7 @@ type PrototypeStore = {
   schedulePlan: (id: string) => void;
   upcomingEvents: FinancialEvent[];
   payCycleSummaries: PayCycleSummary[];
+  unassignedEntries: FinancialEvent[];
   forecastFor: (input: FinancialEvent[]) => Array<FinancialEvent & { cashAfter: number }>;
 };
 
@@ -52,6 +53,15 @@ function buildPayCycleSummaries(input: FinancialEvent[]): PayCycleSummary[] {
 
     return { payday, income, needed, result: income - needed, items };
   });
+}
+
+function findUnassignedEntries(input: FinancialEvent[], cycles: PayCycleSummary[]) {
+  const storedUpcoming = sortEvents(input.filter((event) => event.state !== "actual" && event.date > prototypeToday));
+  const assignedIds = new Set(
+    cycles.flatMap((cycle) => cycle.items.map((event) => event.id)).filter((id) => !id.includes("-preview-"))
+  );
+
+  return storedUpcoming.filter((event) => !assignedIds.has(event.id));
 }
 
 export function PrototypeStoreProvider({ children }: { children: React.ReactNode }) {
@@ -88,6 +98,10 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   );
 
   const payCycleSummaries = useMemo(() => buildPayCycleSummaries(events), [events]);
+  const unassignedEntries = useMemo(
+    () => findUnassignedEntries(events, payCycleSummaries),
+    [events, payCycleSummaries]
+  );
 
   function saveEvent(draft: EventDraft) {
     const nextEvent: FinancialEvent = {
@@ -128,8 +142,6 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   }
 
   function forecastFor(input: FinancialEvent[]) {
-    // Clean-start prototype: until account setup exists, forecasts begin at zero
-    // so projected positions only reflect the events the user entered.
     let running = 0;
     return sortEvents(input).map((event) => {
       running += eventCashEffect(event);
@@ -147,6 +159,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
       schedulePlan,
       upcomingEvents,
       payCycleSummaries,
+      unassignedEntries,
       forecastFor,
     }}>
       {children}
