@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronRight } from "lucide-react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +17,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "@/components/ui/toast";
 import { accounts, type EventState, type EventType, type FinancialEvent } from "@/lib/seed-data";
 import { cn } from "@/lib/utils";
 
@@ -180,7 +180,7 @@ export function FinancialItemForm({
         onSave?.(type === "transfer"
           ? { ...base, fromAccountId, toAccountId }
           : { ...base, accountId });
-        toast.success(item ? "Changes saved" : "Entry added");
+        toast.add({ title: item ? "Changes saved" : "Entry added" });
         finish();
       }}
     >
