@@ -73,6 +73,7 @@ function PaydaysContent() {
   const nextCycle = cycles[0];
   const followingCycle = cycles[1];
   const itemParam = searchParams.get("item");
+  const isPlanMode = itemParam === "new" && searchParams.get("mode") === "plan";
   const editingItem = itemParam && itemParam !== "new" ? events.find((event) => event.id === itemParam) : undefined;
   const editorOpen = itemParam === "new" || Boolean(editingItem);
 
@@ -86,7 +87,7 @@ function PaydaysContent() {
 
   function closeEditor() {
     setSelectionView(null);
-    router.replace("/paydays");
+    router.replace(isPlanMode ? "/upcoming" : "/paydays");
   }
 
   function toggleCompleted(id: string) {
@@ -98,7 +99,7 @@ function PaydaysContent() {
     });
   }
 
-  const editorTitle = editingItem ? `Edit ${editingItem.title}` : "Add item";
+  const editorTitle = editingItem ? `Edit ${editingItem.title}` : isPlanMode ? "Make a plan" : "Add item";
   const drilldownTitle = selectionTitle(selectionView);
   const currentTitle = drilldownTitle ?? editorTitle;
 
@@ -108,6 +109,7 @@ function PaydaysContent() {
       onDone={closeEditor}
       selectionView={selectionView}
       onSelectionViewChange={setSelectionView}
+      submitLabel={isPlanMode ? "Add plan" : undefined}
     />
   );
 
