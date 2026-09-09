@@ -6,7 +6,7 @@ import { Check, ChevronLeft, Pencil, X } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { FinancialItemForm, type SelectionView } from "@/components/financial-item-form";
 import { usePrototypeStore } from "@/components/prototype-store";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { FinancialEvent } from "@/lib/seed-data";
@@ -84,6 +84,7 @@ function PaydaysContent() {
   const returnToUpcoming = isPlanMode || searchParams.get("from") === "upcoming";
   const editingItem = itemParam && itemParam !== "new" ? events.find((event) => event.id === itemParam) : undefined;
   const editorOpen = itemParam === "new" || Boolean(editingItem);
+  const isEmpty = events.length === 0;
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 768px)");
@@ -118,44 +119,60 @@ function PaydaysContent() {
 
   return (
     <>
-      <div className="space-y-6">
-        <section className="grid gap-8 pb-2 sm:grid-cols-2 sm:gap-12">
-          {nextCycle && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Next payday · {formatDate(nextCycle.payday.date, { month: "short", day: "numeric" })}</p>
-              <div>
-                <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
-                <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(nextCycle.result))}</p>
-              </div>
-              <p className="text-sm text-muted-foreground">{formatPHP(nextCycle.income)} income · {formatPHP(nextCycle.needed)} needed</p>
+      {isEmpty ? (
+        <section className="flex min-h-[420px] items-center justify-center py-12">
+          <div className="max-w-sm space-y-4 text-center">
+            <div className="space-y-1.5">
+              <h1 className="text-xl font-semibold tracking-tight">Start your cashflow</h1>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Add your income and upcoming expenses. Paydays will group them into pay cycles and show what is left after each one.
+              </p>
             </div>
-          )}
-
-          {followingCycle && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Following payday · {formatDate(followingCycle.payday.date, { month: "short", day: "numeric" })}</p>
-              <div>
-                <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
-                <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(followingCycle.result))}</p>
-              </div>
-              <p className="text-sm text-muted-foreground">{formatPHP(followingCycle.income)} income · {formatPHP(followingCycle.needed)} needed</p>
-            </div>
-          )}
+            <Link href="/paydays?item=new" className={buttonVariants()}>
+              Add first item
+            </Link>
+          </div>
         </section>
-
-        <section className="space-y-4">
-          {cycles.map((cycle) => (
-            <div key={cycle.payday.id} className="space-y-2">
-              <p className="text-sm font-medium">Payday · {formatDate(cycle.payday.date, { month: "short", day: "numeric" })}</p>
-              <div className="overflow-hidden rounded-xl bg-muted/45">
-                {cycle.items.map((event, eventIndex) => (
-                  <UpcomingRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={eventIndex === cycle.items.length - 1} />
-                ))}
+      ) : (
+        <div className="space-y-6">
+          <section className="grid gap-8 pb-2 sm:grid-cols-2 sm:gap-12">
+            {nextCycle && (
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Next payday · {formatDate(nextCycle.payday.date, { month: "short", day: "numeric" })}</p>
+                <div>
+                  <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
+                  <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(nextCycle.result))}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">{formatPHP(nextCycle.income)} income · {formatPHP(nextCycle.needed)} needed</p>
               </div>
-            </div>
-          ))}
-        </section>
-      </div>
+            )}
+
+            {followingCycle && (
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Following payday · {formatDate(followingCycle.payday.date, { month: "short", day: "numeric" })}</p>
+                <div>
+                  <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
+                  <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(followingCycle.result))}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">{formatPHP(followingCycle.income)} income · {formatPHP(followingCycle.needed)} needed</p>
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-4">
+            {cycles.map((cycle) => (
+              <div key={cycle.payday.id} className="space-y-2">
+                <p className="text-sm font-medium">Payday · {formatDate(cycle.payday.date, { month: "short", day: "numeric" })}</p>
+                <div className="overflow-hidden rounded-xl bg-muted/45">
+                  {cycle.items.map((event, eventIndex) => (
+                    <UpcomingRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={eventIndex === cycle.items.length - 1} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
+        </div>
+      )}
 
       {isTablet ? (
         <Drawer open={editorOpen} onOpenChange={(open) => { if (!open) closeEditor(); }} direction="right">
