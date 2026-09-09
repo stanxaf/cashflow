@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronRight } from "lucide-react";
 import {
@@ -27,6 +27,7 @@ export type SelectionView = "account" | "from" | "to" | "frequency" | null;
 
 const frequencies = [
   { value: "weekly", label: "Weekly" },
+  { value: "biweekly", label: "Biweekly" },
   { value: "twice-monthly", label: "Twice monthly" },
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
@@ -92,12 +93,27 @@ export function FinancialItemForm({
 }) {
   const router = useRouter();
   const [type, setType] = useState<EventType>(item?.type ?? "expense");
+  const [title, setTitle] = useState(item?.title ?? "");
+  const [amount, setAmount] = useState(item ? String(item.amount / 100) : "");
+  const [date, setDate] = useState(item?.date ?? "2026-09-08");
   const [repeat, setRepeat] = useState(Boolean(item?.recurring));
   const [accountId, setAccountId] = useState(item?.accountId ?? "bpi");
   const [fromAccountId, setFromAccountId] = useState(item?.fromAccountId ?? "bpi");
   const [toAccountId, setToAccountId] = useState(item?.toAccountId ?? "maya");
   const [frequency, setFrequency] = useState(frequencyValue(item?.recurring));
   const finish = onDone ?? (() => router.push("/paydays"));
+
+  useEffect(() => {
+    setType(item?.type ?? "expense");
+    setTitle(item?.title ?? "");
+    setAmount(item ? String(item.amount / 100) : "");
+    setDate(item?.date ?? "2026-09-08");
+    setRepeat(Boolean(item?.recurring));
+    setAccountId(item?.accountId ?? "bpi");
+    setFromAccountId(item?.fromAccountId ?? "bpi");
+    setToAccountId(item?.toAccountId ?? "maya");
+    setFrequency(frequencyValue(item?.recurring));
+  }, [item?.id]);
 
   const accountName = (id: string) => accounts.find((account) => account.id === id)?.name ?? "Select";
   const frequencyName = frequencies.find((option) => option.value === frequency)?.label ?? "Select";
@@ -148,14 +164,13 @@ export function FinancialItemForm({
       className="flex min-h-0 flex-1 flex-col"
       onSubmit={(formEvent) => {
         formEvent.preventDefault();
-        const form = new FormData(formEvent.currentTarget);
-        const amount = Math.round(Number(form.get("amount") ?? 0) * 100);
+        const amountInCentavos = Math.round(Number(amount || 0) * 100);
         const recurring = repeat ? frequencyName : undefined;
         const base = {
           id: item?.id,
-          title: String(form.get("title") ?? ""),
-          date: String(form.get("date") ?? ""),
-          amount,
+          title,
+          date,
+          amount: amountInCentavos,
           type,
           state: item?.state ?? newItemState,
           recurring,
@@ -188,7 +203,14 @@ export function FinancialItemForm({
           <section className="overflow-hidden rounded-xl bg-muted/45">
             <label className={cn(rowClass, "border-b border-border/50")}>
               <span className="text-sm">Title</span>
-              <Input name="title" defaultValue={item?.title} placeholder="Required" required className={inputClass} />
+              <Input
+                name="title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Required"
+                required
+                className={inputClass}
+              />
             </label>
 
             <label className={cn(rowClass, "border-b border-border/50")}>
@@ -196,7 +218,8 @@ export function FinancialItemForm({
               <Input
                 name="amount"
                 inputMode="decimal"
-                defaultValue={item ? item.amount / 100 : undefined}
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
                 placeholder="0.00"
                 required
                 className={inputClass}
@@ -205,7 +228,14 @@ export function FinancialItemForm({
 
             <label className={rowClass}>
               <span className="text-sm">{type === "income" ? "Expected" : "Due"}</span>
-              <Input name="date" type="date" defaultValue={item?.date ?? "2026-09-08"} required className={inputClass} />
+              <Input
+                name="date"
+                type="date"
+                value={date}
+                onChange={(event) => setDate(event.target.value)}
+                required
+                className={inputClass}
+              />
             </label>
           </section>
 
