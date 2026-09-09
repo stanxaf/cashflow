@@ -3,14 +3,9 @@
 import Link from "next/link";
 import { Check, Pencil } from "lucide-react";
 import { useMemo, useState } from "react";
+import { usePrototypeStore } from "@/components/prototype-store";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  estimatedPositionToday,
-  eventCashEffect,
-  prototypeToday,
-  upcomingEvents,
-  type FinancialEvent,
-} from "@/lib/seed-data";
+import { eventCashEffect, prototypeToday, type FinancialEvent } from "@/lib/seed-data";
 import { cn, formatDate, formatPHP } from "@/lib/utils";
 
 type Horizon = "30d" | "3m";
@@ -28,45 +23,53 @@ function addMonths(date: string, months: number) {
   return next.toISOString().slice(0, 10);
 }
 
-function buildTimeline(horizon: Horizon) {
-  const realEvents = upcomingEvents();
-  const horizonEnd = horizon === "30d" ? addDays(prototypeToday, 30) : addMonths(prototypeToday, 3);
-  const generated: TimelineEvent[] = [];
-
-  if (horizon === "3m") {
-    for (const event of realEvents.filter((item) => item.recurring)) {
-      for (let offset = 1; offset <= 3; offset += 1) {
-        const date = addMonths(event.date, offset);
-        if (date > horizonEnd) continue;
-        generated.push({ ...event, id: `${event.id}-preview-${offset}`, date, state: "scheduled", preview: true });
-      }
-    }
-  }
-
-  const timeline = [...realEvents, ...generated]
-    .filter((event) => event.date <= horizonEnd)
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  let running = estimatedPositionToday();
-  return timeline.map((event) => {
-    running += eventCashEffect(event);
-    return { ...event, cashAfter: running };
-  });
-}
-
 function monthKey(date: string) {
   return date.slice(0, 7);
 }
 
 function amountPrefix(event: TimelineEvent) {
-  if (event.type === "income") return "+";
-  return "−";
+  return event.type === "income" ? "+" : "−";
+}
+
+function stateLabel(event: TimelineEvent, completed: boolean) {
+  if (completed) return "Completed";
+  if (event.preview) return "Recurring preview";
+  if (event.state === "planned") return "Planned";
+  return "Scheduled";
 }
 
 export default function UpcomingPage() {
+  const {
+    upcomingEvents,
+    completedIds,
+    toggleCompleted,
+    forecastFor,
+  } = usePrototypeStore();
   const [horizon, setHorizon] = useState<Horizon>("30d");
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
-  const timeline = useMemo(() => buildTimeline(horizon), [horizon]);
+
+  const timeline = useMemo(() => {
+    const horizonEnd = horizon === "30d" ? addDays(prototypeToday, 30) : addMonths(prototypeToday, 3);
+    const generated: TimelineEvent[] = [];
+
+    if (horizon === "3m") {
+      for (const event of upcomingEvents.filter((item) => item.recurring)) {
+        for (let offset = 1; offset <= 3; offset += 1) {
+          const date = addMonths(event.date, offset);
+          if (date > horizonEnd) continue;
+          generated.push({ ...event, id: `${event.id}-preview-${offset}`, date, state: "scheduled", preview: true });
+        }
+      }
+    }
+
+    const visible = [...upcomingEvents, ...generated]
+      .filter((event) => event.date <= horizonEnd)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    return forecastFor(visible).map((event) => ({
+      ...event,
+      preview: generated.some((preview) => preview.id === event.id),
+    }));
+  }, [forecastFor, horizon, upcomingEvents]);
 
   const groups = useMemo(() => {
     const grouped = new Map<string, TimelineEvent[]>();
@@ -77,13 +80,15 @@ export default function UpcomingPage() {
     return [...grouped.entries()];
   }, [timeline]);
 
-  function toggleComplete(id: string) {
-    setCompletedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const paydays = useMemo(
+    () => timeline.filter((event) => event.type === "income").map((event) => event.date),
+    [timeline]
+  );
+
+  function paydayContext(event: TimelineEvent) {
+    if (event.type === "income") return null;
+    const payday = paydays.find((date) => date >= event.date);
+    return payday ? `${formatDate(payday, { month: "short", day: "numeric" })} payday` : null;
   }
 
   return (
@@ -127,11 +132,9 @@ export default function UpcomingPage() {
       <div className="space-y-7">
         {groups.map(([month, items]) => (
           <section key={month} className="space-y-2">
-            <div className="flex items-baseline justify-between gap-4 px-1">
-              <h2 className="text-sm font-medium">
-                {formatDate(`${month}-01`, { month: "long", year: "numeric" })}
-              </h2>
-            </div>
+            <h2 className="px-1 text-sm font-medium">
+              {formatDate(`${month}-01`, { month: "long", year: "numeric" })}
+            </h2>
 
             <div className="overflow-hidden rounded-xl bg-muted/45">
               {items.map((event, index) => {
@@ -139,6 +142,7 @@ export default function UpcomingPage() {
                 const checkpointCashAfter = event.type === "income" ? event.cashAfter : undefined;
                 const checkpoint = typeof checkpointCashAfter === "number";
                 const isLastEvent = index === items.length - 1;
+                const payday = paydayContext(event);
 
                 return (
                   <div key={event.id}>
@@ -148,7 +152,7 @@ export default function UpcomingPage() {
                         disabled={event.preview}
                         aria-label={completed ? `Mark ${event.title} as upcoming` : `Mark ${event.title} as complete`}
                         aria-pressed={completed}
-                        onClick={() => toggleComplete(event.id)}
+                        onClick={() => toggleCompleted(event.id)}
                         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default"
                       >
                         <span className={cn(
@@ -162,10 +166,9 @@ export default function UpcomingPage() {
 
                       <div className="min-w-0 py-2">
                         <p className={cn("truncate text-sm font-medium", completed && "text-muted-foreground line-through")}>{event.title}</p>
-                        <p className="mt-0.5 text-sm text-muted-foreground">
-                          {formatDate(event.date, { month: "short", day: "numeric" })}
-                          {event.state === "planned" ? " · Planned" : ""}
-                          {event.preview ? " · Recurring preview" : ""}
+                        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                          {formatDate(event.date, { month: "short", day: "numeric" })} · {stateLabel(event, completed)}
+                          {payday ? ` · ${payday}` : ""}
                         </p>
                       </div>
 
@@ -175,7 +178,7 @@ export default function UpcomingPage() {
                         <span className="h-11 w-11" aria-hidden="true" />
                       ) : (
                         <Link
-                          href={`/paydays?item=${event.id}`}
+                          href={`/paydays?item=${event.id}&from=upcoming`}
                           aria-label={`Edit ${event.title}`}
                           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
@@ -201,7 +204,7 @@ export default function UpcomingPage() {
       </div>
 
       {horizon === "3m" && (
-        <p className="px-1 text-xs text-muted-foreground">Later recurring rows are previews only in this prototype.</p>
+        <p className="px-1 text-xs text-muted-foreground">Later recurring rows are previews only. Editing the source item updates future previews.</p>
       )}
     </div>
   );
