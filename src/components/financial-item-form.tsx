@@ -70,11 +70,13 @@ export function FinancialItemForm({
   onDone,
   selectionView,
   onSelectionViewChange,
+  submitLabel,
 }: {
   item?: FinancialEvent;
   onDone?: () => void;
   selectionView: SelectionView;
   onSelectionViewChange: (view: SelectionView) => void;
+  submitLabel?: string;
 }) {
   const router = useRouter();
   const [type, setType] = useState<EventType>(item?.type ?? "expense");
@@ -241,7 +243,7 @@ export function FinancialItemForm({
       </div>
 
       <div className="shrink-0 border-t bg-background p-4">
-        <Button type="submit" size="default" className="w-full">{item ? "Save changes" : "Add item"}</Button>
+        <Button type="submit" size="default" className="w-full">{submitLabel ?? (item ? "Save changes" : "Add item")}</Button>
       </div>
     </form>
   );
