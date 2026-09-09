@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronRight } from "lucide-react";
 import {
@@ -17,7 +17,8 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { accounts, type EventType, type FinancialEvent } from "@/lib/seed-data";
+import { toast } from "@/components/ui/toast";
+import { accounts, type EventState, type EventType, type FinancialEvent } from "@/lib/seed-data";
 import { cn } from "@/lib/utils";
 
 const rowClass = "grid min-h-14 grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-4 px-4";
@@ -27,10 +28,15 @@ export type SelectionView = "account" | "from" | "to" | "frequency" | null;
 
 const frequencies = [
   { value: "weekly", label: "Weekly" },
+  { value: "biweekly", label: "Biweekly" },
   { value: "twice-monthly", label: "Twice monthly" },
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
 ];
+
+function frequencyValue(recurring?: string) {
+  return frequencies.find((option) => option.label.toLowerCase() === recurring?.toLowerCase())?.value ?? "monthly";
+}
 
 function SelectionRow({ label, selected, onSelect, isLast }: { label: string; selected: boolean; onSelect: () => void; isLast: boolean }) {
   return (
@@ -68,22 +74,47 @@ function DrilldownRow({ label, value, onOpen, hasBorder = false }: { label: stri
 export function FinancialItemForm({
   item,
   onDone,
+  onSave,
+  onDelete,
+  onSchedulePlan,
+  newItemState = "scheduled",
   selectionView,
   onSelectionViewChange,
+  submitLabel,
 }: {
   item?: FinancialEvent;
   onDone?: () => void;
+  onSave?: (event: Omit<FinancialEvent, "id"> & { id?: string }) => void;
+  onDelete?: (id: string) => void;
+  onSchedulePlan?: (id: string) => void;
+  newItemState?: EventState;
   selectionView: SelectionView;
   onSelectionViewChange: (view: SelectionView) => void;
+  submitLabel?: string;
 }) {
   const router = useRouter();
   const [type, setType] = useState<EventType>(item?.type ?? "expense");
+  const [title, setTitle] = useState(item?.title ?? "");
+  const [amount, setAmount] = useState(item ? String(item.amount / 100) : "");
+  const [date, setDate] = useState(item?.date ?? "2026-09-08");
   const [repeat, setRepeat] = useState(Boolean(item?.recurring));
   const [accountId, setAccountId] = useState(item?.accountId ?? "bpi");
   const [fromAccountId, setFromAccountId] = useState(item?.fromAccountId ?? "bpi");
   const [toAccountId, setToAccountId] = useState(item?.toAccountId ?? "maya");
-  const [frequency, setFrequency] = useState("monthly");
+  const [frequency, setFrequency] = useState(frequencyValue(item?.recurring));
   const finish = onDone ?? (() => router.push("/paydays"));
+
+  useEffect(() => {
+    setType(item?.type ?? "expense");
+    setTitle(item?.title ?? "");
+    setAmount(item ? String(item.amount / 100) : "");
+    setDate(item?.date ?? "2026-09-08");
+    setRepeat(Boolean(item?.recurring));
+    setAccountId(item?.accountId ?? "bpi");
+    setFromAccountId(item?.fromAccountId ?? "bpi");
+    setToAccountId(item?.toAccountId ?? "maya");
+    setFrequency(frequencyValue(item?.recurring));
+  }, [item?.id]);
 
   const accountName = (id: string) => accounts.find((account) => account.id === id)?.name ?? "Select";
   const frequencyName = frequencies.find((option) => option.value === frequency)?.label ?? "Select";
@@ -132,16 +163,27 @@ export function FinancialItemForm({
   return (
     <form
       className="flex min-h-0 flex-1 flex-col"
-      onSubmit={(event) => {
-        event.preventDefault();
+      onSubmit={(formEvent) => {
+        formEvent.preventDefault();
+        const amountInCentavos = Math.round(Number(amount || 0) * 100);
+        const recurring = repeat ? frequencyName : undefined;
+        const base = {
+          id: item?.id,
+          title,
+          date,
+          amount: amountInCentavos,
+          type,
+          state: item?.state ?? newItemState,
+          recurring,
+        };
+
+        onSave?.(type === "transfer"
+          ? { ...base, fromAccountId, toAccountId }
+          : { ...base, accountId });
+        toast.add({ title: item ? "Changes saved" : "Entry added" });
         finish();
       }}
     >
-      <input type="hidden" name="accountId" value={accountId} />
-      <input type="hidden" name="fromAccountId" value={fromAccountId} />
-      <input type="hidden" name="toAccountId" value={toAccountId} />
-      <input type="hidden" name="frequency" value={frequency} />
-
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-2">
         <div className="mx-auto w-full max-w-lg space-y-5">
           <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
@@ -163,24 +205,17 @@ export function FinancialItemForm({
           <section className="overflow-hidden rounded-xl bg-muted/45">
             <label className={cn(rowClass, "border-b border-border/50")}>
               <span className="text-sm">Title</span>
-              <Input name="title" defaultValue={item?.title} placeholder="Required" required className={inputClass} />
+              <Input name="title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Required" required className={inputClass} />
             </label>
 
             <label className={cn(rowClass, "border-b border-border/50")}>
               <span className="text-sm">Amount (₱)</span>
-              <Input
-                name="amount"
-                inputMode="decimal"
-                defaultValue={item ? item.amount / 100 : undefined}
-                placeholder="0.00"
-                required
-                className={inputClass}
-              />
+              <Input name="amount" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required className={inputClass} />
             </label>
 
             <label className={rowClass}>
               <span className="text-sm">{type === "income" ? "Expected" : "Due"}</span>
-              <Input name="date" type="date" defaultValue={item?.date ?? "2026-09-08"} required className={inputClass} />
+              <Input name="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} required className={inputClass} />
             </label>
           </section>
 
@@ -203,34 +238,35 @@ export function FinancialItemForm({
               </div>
             </div>
 
-            {repeat && (
-              <DrilldownRow label="Frequency" value={frequencyName} onOpen={() => onSelectionViewChange("frequency")} />
-            )}
+            {repeat && <DrilldownRow label="Frequency" value={frequencyName} onOpen={() => onSelectionViewChange("frequency")} />}
           </section>
 
-          {item && (
+          {item?.state === "planned" && onSchedulePlan && (
+            <section className="overflow-hidden rounded-xl bg-muted/45">
+              <button type="button" className="flex min-h-14 w-full items-center justify-center px-4 text-sm font-medium transition-colors hover:bg-muted" onClick={() => { onSchedulePlan(item.id); finish(); }}>
+                Convert to scheduled
+              </button>
+            </section>
+          )}
+
+          {item && onDelete && (
             <AlertDialog>
               <section className="overflow-hidden rounded-xl bg-muted/45">
                 <AlertDialogTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex min-h-14 w-full items-center justify-center px-4 text-sm font-medium text-destructive transition-colors hover:bg-muted"
-                  >
-                    Delete item
+                  <button type="button" className="flex min-h-14 w-full items-center justify-center px-4 text-sm font-medium text-destructive transition-colors hover:bg-muted">
+                    Delete entry
                   </button>
                 </AlertDialogTrigger>
               </section>
 
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete item?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Delete {item.title}? This action cannot be undone.
-                  </AlertDialogDescription>
+                  <AlertDialogTitle>Delete entry?</AlertDialogTitle>
+                  <AlertDialogDescription>Delete {item.title}? This action cannot be undone.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={finish}>
+                  <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={() => { onDelete(item.id); finish(); }}>
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -241,7 +277,7 @@ export function FinancialItemForm({
       </div>
 
       <div className="shrink-0 border-t bg-background p-4">
-        <Button type="submit" size="default" className="w-full">{item ? "Save changes" : "Add item"}</Button>
+        <Button type="submit" size="default" className="w-full">{submitLabel ?? (item ? "Save changes" : "Add entry")}</Button>
       </div>
     </form>
   );

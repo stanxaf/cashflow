@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronLeft, Pencil, X } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { FinancialItemForm, type SelectionView } from "@/components/financial-item-form";
-import { Button } from "@/components/ui/button";
+import { usePrototypeStore } from "@/components/prototype-store";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { FinancialEvent } from "@/lib/seed-data";
-import { events, payCycleSummaries } from "@/lib/seed-data";
 import { cn, formatDate, formatPHP } from "@/lib/utils";
 
 function timingLabel(type: string, date: string) {
@@ -36,11 +37,13 @@ function selectionTitle(view: SelectionView) {
   return null;
 }
 
-function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialEvent; completed: boolean; onToggle: () => void; isLast: boolean }) {
+function EntryRow({ event, completed, onToggle, isLast }: { event: FinancialEvent; completed: boolean; onToggle: () => void; isLast: boolean }) {
+  const isPreview = event.id.includes("-preview-");
+
   return (
     <div className={cn("grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-2 py-1.5 sm:px-3", !isLast && "border-b border-border/50", completed && "text-muted-foreground")}>
-      <button type="button" aria-label={completed ? `Mark ${event.title} as upcoming` : `Mark ${event.title} as complete`} aria-pressed={completed} onClick={onToggle} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        <span className={cn("flex h-5 w-5 items-center justify-center rounded-full border transition-colors", completed ? "border-foreground bg-foreground text-background" : "border-muted-foreground/50")}>
+      <button type="button" disabled={isPreview} aria-label={completed ? `Mark ${event.title} as upcoming` : `Mark ${event.title} as complete`} aria-pressed={completed} onClick={onToggle} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default">
+        <span className={cn("flex h-5 w-5 items-center justify-center rounded-full border transition-colors", completed ? "border-foreground bg-foreground text-background" : "border-muted-foreground/50", isPreview && "opacity-40")}>
           {completed && <Check className="h-3.5 w-3.5" />}
         </span>
       </button>
@@ -48,7 +51,7 @@ function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialE
       <div className="min-w-0 py-2">
         <p className={cn("truncate text-sm font-medium", completed && "line-through")}>{event.title}</p>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          {completed ? completedTimingLabel(event.type, event.date) : `${timingLabel(event.type, event.date)}${event.state === "planned" ? " · Planned" : ""}`}
+          {completed ? completedTimingLabel(event.type, event.date) : `${timingLabel(event.type, event.date)}${isPreview ? " · Recurring preview" : event.state === "planned" ? " · Planned" : ""}`}
         </p>
       </div>
 
@@ -56,9 +59,13 @@ function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialE
         {event.type === "income" ? "+" : "−"}{formatPHP(event.amount)}
       </p>
 
-      <Link href={`/paydays?item=${event.id}`} aria-label={`Edit ${event.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        <Pencil className="h-4 w-4" />
-      </Link>
+      {isPreview ? (
+        <span className="h-11 w-11" aria-hidden="true" />
+      ) : (
+        <Link href={`/paydays?item=${event.id}`} aria-label={`Edit ${event.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Pencil className="h-4 w-4" />
+        </Link>
+      )}
     </div>
   );
 }
@@ -66,15 +73,25 @@ function UpcomingRow({ event, completed, onToggle, isLast }: { event: FinancialE
 function PaydaysContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const {
+    events,
+    completedIds,
+    payCycleSummaries: cycles,
+    unassignedEntries,
+    saveEvent,
+    deleteEvent,
+    toggleCompleted,
+    schedulePlan,
+  } = usePrototypeStore();
   const [isTablet, setIsTablet] = useState(false);
   const [selectionView, setSelectionView] = useState<SelectionView>(null);
-  const cycles = payCycleSummaries();
   const nextCycle = cycles[0];
   const followingCycle = cycles[1];
   const itemParam = searchParams.get("item");
   const editingItem = itemParam && itemParam !== "new" ? events.find((event) => event.id === itemParam) : undefined;
   const editorOpen = itemParam === "new" || Boolean(editingItem);
+  const hasNoEvents = events.length === 0;
+  const hasNoPayCycles = cycles.length === 0;
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 768px)");
@@ -89,16 +106,7 @@ function PaydaysContent() {
     router.replace("/paydays");
   }
 
-  function toggleCompleted(id: string) {
-    setCompletedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  const editorTitle = editingItem ? `Edit ${editingItem.title}` : "Add item";
+  const editorTitle = editingItem ? `Edit ${editingItem.title}` : "Add entry";
   const drilldownTitle = selectionTitle(selectionView);
   const currentTitle = drilldownTitle ?? editorTitle;
 
@@ -106,6 +114,9 @@ function PaydaysContent() {
     <FinancialItemForm
       item={editingItem}
       onDone={closeEditor}
+      onSave={saveEvent}
+      onDelete={deleteEvent}
+      onSchedulePlan={schedulePlan}
       selectionView={selectionView}
       onSelectionViewChange={setSelectionView}
     />
@@ -113,44 +124,82 @@ function PaydaysContent() {
 
   return (
     <>
-      <div className="space-y-6">
-        <section className="grid gap-8 pb-2 sm:grid-cols-2 sm:gap-12">
-          {nextCycle && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Next payday · {formatDate(nextCycle.payday.date, { month: "short", day: "numeric" })}</p>
-              <div>
-                <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
-                <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(nextCycle.result))}</p>
+      {hasNoEvents ? (
+        <Empty className="min-h-[420px] py-12">
+          <EmptyHeader>
+            <EmptyTitle>Start your cashflow</EmptyTitle>
+            <EmptyDescription>Add your income and upcoming expenses. Paydays will group them into pay cycles and show what is left after each one.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Link href="/paydays?item=new" className={buttonVariants()}>Add first entry</Link>
+          </EmptyContent>
+        </Empty>
+      ) : (
+        <div className="space-y-6">
+          {hasNoPayCycles ? (
+            <section className="space-y-4">
+              <div className="px-1">
+                <p className="text-sm font-medium">Add your first payday</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">Your entries are saved below. Add an income entry to start grouping them into pay cycles.</p>
               </div>
-              <p className="text-sm text-muted-foreground">{formatPHP(nextCycle.income)} income · {formatPHP(nextCycle.needed)} needed</p>
-            </div>
+              <Link href="/paydays?item=new" className={buttonVariants({ size: "sm" })}>Add income</Link>
+            </section>
+          ) : (
+            <>
+              <section className="grid gap-8 pb-2 sm:grid-cols-2 sm:gap-12">
+                {nextCycle && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Next payday · {formatDate(nextCycle.payday.date, { month: "short", day: "numeric" })}</p>
+                    <div>
+                      <p className="text-sm text-muted-foreground">{cycleResultLabel(nextCycle.result)}</p>
+                      <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(nextCycle.result))}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{formatPHP(nextCycle.income)} income · {formatPHP(nextCycle.needed)} needed</p>
+                  </div>
+                )}
+
+                {followingCycle && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Following payday · {formatDate(followingCycle.payday.date, { month: "short", day: "numeric" })}</p>
+                    <div>
+                      <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
+                      <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(followingCycle.result))}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{formatPHP(followingCycle.income)} income · {formatPHP(followingCycle.needed)} needed</p>
+                  </div>
+                )}
+              </section>
+
+              <section className="space-y-4">
+                {cycles.map((cycle) => (
+                  <div key={cycle.payday.id} className="space-y-2">
+                    <p className="text-sm font-medium">Payday · {formatDate(cycle.payday.date, { month: "short", day: "numeric" })}</p>
+                    <div className="overflow-hidden rounded-xl bg-muted/45">
+                      {cycle.items.map((event, eventIndex) => (
+                        <EntryRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={eventIndex === cycle.items.length - 1} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </section>
+            </>
           )}
 
-          {followingCycle && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Following payday · {formatDate(followingCycle.payday.date, { month: "short", day: "numeric" })}</p>
-              <div>
-                <p className="text-sm text-muted-foreground">{cycleResultLabel(followingCycle.result)}</p>
-                <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{formatPHP(Math.abs(followingCycle.result))}</p>
+          {unassignedEntries.length > 0 && (
+            <section className="space-y-2">
+              <div className="px-1">
+                <p className="text-sm font-medium">{hasNoPayCycles ? "Entries" : "Unassigned to a payday"}</p>
+                {!hasNoPayCycles && <p className="mt-0.5 text-sm text-muted-foreground">These entries are after your last known payday. Add another income entry or recurrence to place them into a pay cycle.</p>}
               </div>
-              <p className="text-sm text-muted-foreground">{formatPHP(followingCycle.income)} income · {formatPHP(followingCycle.needed)} needed</p>
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-4">
-          {cycles.map((cycle) => (
-            <div key={cycle.payday.id} className="space-y-2">
-              <p className="text-sm font-medium">Payday · {formatDate(cycle.payday.date, { month: "short", day: "numeric" })}</p>
               <div className="overflow-hidden rounded-xl bg-muted/45">
-                {cycle.items.map((event, eventIndex) => (
-                  <UpcomingRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={eventIndex === cycle.items.length - 1} />
+                {unassignedEntries.map((event, index) => (
+                  <EntryRow key={event.id} event={event} completed={completedIds.has(event.id)} onToggle={() => toggleCompleted(event.id)} isLast={index === unassignedEntries.length - 1} />
                 ))}
               </div>
-            </div>
-          ))}
-        </section>
-      </div>
+            </section>
+          )}
+        </div>
+      )}
 
       {isTablet ? (
         <Drawer open={editorOpen} onOpenChange={(open) => { if (!open) closeEditor(); }} direction="right">
@@ -166,9 +215,7 @@ function PaydaysContent() {
               </div>
             </DrawerHeader>
             <DrawerClose asChild>
-              <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close">
-                <X className="h-4 w-4" />
-              </Button>
+              <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close"><X className="h-4 w-4" /></Button>
             </DrawerClose>
             {editorForm}
           </DrawerContent>
@@ -179,9 +226,7 @@ function PaydaysContent() {
             <SheetHeader className="border-b px-4 py-4 pr-12 text-left">
               <div className="flex items-center gap-2">
                 {selectionView && (
-                  <Button type="button" variant="ghost" size="icon" aria-label="Back" onClick={() => setSelectionView(null)} className="-ml-2 shrink-0">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
+                  <Button type="button" variant="ghost" size="icon" aria-label="Back" onClick={() => setSelectionView(null)} className="-ml-2 shrink-0"><ChevronLeft className="h-4 w-4" /></Button>
                 )}
                 <SheetTitle>{currentTitle}</SheetTitle>
               </div>
